@@ -1,15 +1,4 @@
-use std::cell::RefCell;
-use std::fmt::Pointer;
-use std::rc::Rc;
-use color_eyre::Result;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::{prelude::*, widgets::*};
-use tokio::sync::mpsc::UnboundedSender;
-use log::{info, warn};
-use tui_logger::{TuiLoggerLevelOutput, TuiLoggerWidget};
-use balatro_tui::{clone_online_mod_list, get_repo_at, update_repo};
 use super::Component;
-use crate::{action::Action, config::Config};
 use crate::app::App;
 use crate::components::authoring::AuthoringTools;
 use crate::components::modlist::ModlistComponent;
@@ -19,6 +8,17 @@ use crate::components::remotemods::RemoteModsComponent;
 use crate::config::get_data_dir;
 use crate::mods::{Mod, ModList, RemoteMod};
 use crate::tui::Event;
+use crate::{action::Action, config::Config};
+use balatro_tui::{clone_online_mod_list, get_repo_at, update_repo};
+use color_eyre::Result;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use log::{info, warn};
+use ratatui::{prelude::*, widgets::*};
+use std::cell::RefCell;
+use std::fmt::Pointer;
+use std::rc::Rc;
+use tokio::sync::mpsc::UnboundedSender;
+use tui_logger::{TuiLoggerLevelOutput, TuiLoggerWidget};
 
 #[derive(Default)]
 enum Focused {
@@ -56,20 +56,32 @@ pub struct Home {
 
 impl Home {
     pub fn new() -> Self {
-        let mut installed_mod_selector = ModlistComponent::new();
+        let installed_mod_selector = ModlistComponent::new();
 
         let mut mode_selector = OptionSelector::new(vec![
-            vec![OptionSelectorText::new("Quick Options".to_string(), Style::default())],
-            vec![OptionSelectorText::new("Installed Mods".to_string(), Style::default())],
-            vec![OptionSelectorText::new("Find New Mods".to_string(), Style::default())],
-            vec![OptionSelectorText::new("Mod Authoring Tools".to_string(), Style::default())],
+            vec![OptionSelectorText::new(
+                "Quick Options".to_string(),
+                Style::default(),
+            )],
+            vec![OptionSelectorText::new(
+                "Installed Mods".to_string(),
+                Style::default(),
+            )],
+            vec![OptionSelectorText::new(
+                "Find New Mods".to_string(),
+                Style::default(),
+            )],
+            vec![OptionSelectorText::new(
+                "Mod Authoring Tools".to_string(),
+                Style::default(),
+            )],
         ]);
 
         mode_selector.has_focus = true;
         mode_selector.title = "Modes".to_string();
-        
+
         let authoring = AuthoringTools::new();
-        
+
         let quick_ops = QuickOptions::new();
 
         let remote_mod_selector = RemoteModsComponent::new();
@@ -98,8 +110,12 @@ impl Component for Home {
     }
     fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> Result<()> {
         self.command_tx = Some(tx.clone());
-        self.installed_mod_selector.register_action_handler(tx.clone()).expect("Failed to register action handler for installed mod selector");
-        self.quick_ops.register_action_handler(tx.clone()).expect("Failed to register action handler for quick ops");
+        self.installed_mod_selector
+            .register_action_handler(tx.clone())
+            .expect("Failed to register action handler for installed mod selector");
+        self.quick_ops
+            .register_action_handler(tx.clone())
+            .expect("Failed to register action handler for quick ops");
         Ok(())
     }
 
@@ -120,7 +136,8 @@ impl Component for Home {
                                         self.focused = Focused::Quicks;
                                         self.quick_ops.focus();
                                     }
-                                    1 => { // installed mods
+                                    1 => {
+                                        // installed mods
                                         self.focused = Focused::InstalledMods;
                                         self.installed_mod_selector.focus();
                                     }
@@ -141,54 +158,46 @@ impl Component for Home {
                             }
                         }
                     }
-                    Focused::Quicks => {
-                        match key.code {
-                            KeyCode::Left => {
-                                self.focused = Focused::Modes;
-                                self.quick_ops.unfocus();
-                                self.mode_selector.focus();
-                            }
-                            _ => {
-                                let _ = self.quick_ops.handle_key_event(key);
-                            }
+                    Focused::Quicks => match key.code {
+                        KeyCode::Left => {
+                            self.focused = Focused::Modes;
+                            self.quick_ops.unfocus();
+                            self.mode_selector.focus();
                         }
-                    }
-                    Focused::InstalledMods => {
-                        match key.code {
-                            KeyCode::Left => {
-                                self.focused = Focused::Modes;
-                                self.installed_mod_selector.unfocus();
-                                self.mode_selector.focus();
-                            }
-                            _ => {
-                                let _ = self.installed_mod_selector.handle_key_event(key);
-                            }
+                        _ => {
+                            let _ = self.quick_ops.handle_key_event(key);
                         }
-                    }
-                    Focused::RemoteMods => {
-                        match key.code {
-                            KeyCode::Left => {
-                                self.focused = Focused::Modes;
-                                self.remote_mod_selector.unfocus();
-                                self.mode_selector.focus();
-                            }
-                            _ => {
-                                let _ = self.remote_mod_selector.handle_key_event(key);
-                            }
+                    },
+                    Focused::InstalledMods => match key.code {
+                        KeyCode::Left => {
+                            self.focused = Focused::Modes;
+                            self.installed_mod_selector.unfocus();
+                            self.mode_selector.focus();
                         }
-                    }
-                    Focused::Authoring => {
-                        match key.code {
-                            KeyCode::Left => {
-                                self.focused = Focused::Modes;
-                                self.authoring.unfocus();
-                                self.mode_selector.focus();
-                            }
-                            _ => {
-                                let _ = self.authoring.handle_key_event(key);
-                            }
+                        _ => {
+                            let _ = self.installed_mod_selector.handle_key_event(key);
                         }
-                    }
+                    },
+                    Focused::RemoteMods => match key.code {
+                        KeyCode::Left => {
+                            self.focused = Focused::Modes;
+                            self.remote_mod_selector.unfocus();
+                            self.mode_selector.focus();
+                        }
+                        _ => {
+                            let _ = self.remote_mod_selector.handle_key_event(key);
+                        }
+                    },
+                    Focused::Authoring => match key.code {
+                        KeyCode::Left => {
+                            self.focused = Focused::Modes;
+                            self.authoring.unfocus();
+                            self.mode_selector.focus();
+                        }
+                        _ => {
+                            let _ = self.authoring.handle_key_event(key);
+                        }
+                    },
                 }
             }
         }
@@ -203,7 +212,7 @@ impl Component for Home {
                         self.state = DrawingState::Loading;
                     }
                     DrawingState::Loading => {
-                        if let Some(repo) = get_repo_at(&get_data_dir().join("mods")) {
+                        if let Some(_repo) = get_repo_at(&get_data_dir().join("mods")) {
                             // println!("Balatro-tui is updating the mod list, please wait...");
                             self.state = DrawingState::UpdatingModlist;
                         } else {
@@ -219,7 +228,8 @@ impl Component for Home {
                         self.state = DrawingState::Main;
                     }
                     DrawingState::DownloadingModlist => {
-                        clone_online_mod_list(get_data_dir().join("mods")).expect("Failed to download mod list.");
+                        clone_online_mod_list(get_data_dir().join("mods"))
+                            .expect("Failed to download mod list.");
                         self.remote_mod_selector.setup_mods();
                         self.state = DrawingState::Main;
                     }
@@ -231,11 +241,11 @@ impl Component for Home {
             }
             _ => {}
         }
-        
+
         self.installed_mod_selector.update(action.clone())?;
         self.quick_ops.update(action.clone())?;
         self.remote_mod_selector.update(action.clone())?;
-        
+
         Ok(None)
     }
 
@@ -244,39 +254,24 @@ impl Component for Home {
             DrawingState::None => {
                 // self.state = DrawingState::Main;
             }
-            DrawingState::Loading => {
-                frame.render_widget(
-                    Paragraph::new(Line::from("Now loading...").centered())
-                        .style(Style::default())
-                        .block(
-                            Block::bordered()
-                                .border_type(BorderType::Rounded)
-                        ),
-                    area
-                )
-            }
-            DrawingState::DownloadingModlist => {
-                frame.render_widget(
-                    Paragraph::new(Line::from("Downloading mod list...").centered())
-                        .style(Style::default())
-                        .block(
-                            Block::bordered()
-                                .border_type(BorderType::Rounded)
-                        ),
-                    area
-                )
-            }
-            DrawingState::UpdatingModlist => {
-                frame.render_widget(
-                    Paragraph::new(Line::from("Updating mod list...").centered())
-                        .style(Style::default())
-                        .block(
-                            Block::bordered()
-                                .border_type(BorderType::Rounded)
-                        ),
-                    area
-                )
-            }
+            DrawingState::Loading => frame.render_widget(
+                Paragraph::new(Line::from("Now loading...").centered())
+                    .style(Style::default())
+                    .block(Block::bordered().border_type(BorderType::Rounded)),
+                area,
+            ),
+            DrawingState::DownloadingModlist => frame.render_widget(
+                Paragraph::new(Line::from("Downloading mod list...").centered())
+                    .style(Style::default())
+                    .block(Block::bordered().border_type(BorderType::Rounded)),
+                area,
+            ),
+            DrawingState::UpdatingModlist => frame.render_widget(
+                Paragraph::new(Line::from("Updating mod list...").centered())
+                    .style(Style::default())
+                    .block(Block::bordered().border_type(BorderType::Rounded)),
+                area,
+            ),
             DrawingState::Main => {
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
@@ -288,37 +283,36 @@ impl Component for Home {
                     .split(area);
 
                 frame.render_widget(
-                    Paragraph::new("Balatro TUI")
-                        .style(Style::default())
-                        .block(
-                            Block::default()
-                                .borders(Borders::ALL)
-                                .border_type(BorderType::Rounded)
-                        ),
-                    vertical_chunks[0]
+                    Paragraph::new("Balatro TUI").style(Style::default()).block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded),
+                    ),
+                    vertical_chunks[0],
                 );
-
 
                 let horizontal_chunks = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints([
-                        Constraint::Length(40),
-                        Constraint::Min(50)
-                    ])
+                    .constraints([Constraint::Length(40), Constraint::Min(50)])
                     .split(vertical_chunks[1]);
                 self.mode_selector.draw(frame, horizontal_chunks[0])?;
 
                 match self.mode_selector.selected {
-                    0 => { // quick options
+                    0 => {
+                        // quick options
                         self.quick_ops.draw(frame, horizontal_chunks[1])?;
                     }
-                    1 => { // installed mods
-                        self.installed_mod_selector.draw(frame, horizontal_chunks[1])?;
+                    1 => {
+                        // installed mods
+                        self.installed_mod_selector
+                            .draw(frame, horizontal_chunks[1])?;
                     }
-                    2 => { // find mods
+                    2 => {
+                        // find mods
                         self.remote_mod_selector.draw(frame, horizontal_chunks[1])?;
                     }
-                    3 => { // mod tools
+                    3 => {
+                        // mod tools
                         self.authoring.draw(frame, horizontal_chunks[1])?;
                     }
                     _ => {}
@@ -326,10 +320,11 @@ impl Component for Home {
 
                 frame.render_widget(
                     TuiLoggerWidget::default()
-                        .block(Block::default()
-                            .borders(Borders::ALL)
-                            .border_type(BorderType::Rounded)
-                            .title("Logs")
+                        .block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .border_type(BorderType::Rounded)
+                                .title("Logs"),
                         )
                         .output_level(None)
                         .style_info(Style::default().fg(Color::LightGreen))
@@ -340,7 +335,7 @@ impl Component for Home {
                         .output_target(false)
                         .output_timestamp(None)
                         .output_line(false),
-                    vertical_chunks[2]
+                    vertical_chunks[2],
                 );
             }
             _ => {}

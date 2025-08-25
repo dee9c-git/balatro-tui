@@ -1,12 +1,12 @@
-use std::cell::RefCell;
-use std::cmp::min;
-use std::ops::Add;
-use std::rc::Rc;
-use std::time::Instant;
-
+use super::{Component, Eventable};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::info;
+use notify::recommended_watcher;
+use notify::{Event, RecursiveMode, Watcher};
+use ratatui::style::Color;
+use ratatui::text::{Line, Text};
+use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Rect},
@@ -14,13 +14,9 @@ use ratatui::{
     text::Span,
     widgets::Paragraph,
 };
-use ratatui::layout::Direction;
-use ratatui::style::{Color, Modifier};
-use ratatui::text::{Line, Text};
-use ratatui::widgets::{Block, BorderType, Borders};
+use std::path::Path;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use super::{Component, Eventable};
 
 use crate::action::Action;
 use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
@@ -53,29 +49,84 @@ impl ModlistComponent {
             local_action_rx: modlist_rx,
             local_action_tx: modlist_tx,
         };
+
         this.mods = ModList::get_local_mods();
         this.build_options();
+
+        // Watch the mod directory for changes using notify
+        let mod_dir = ModList::get_local_mod_dir().as_path().to_path_buf();
+        let local_action_tx_clone = this.local_action_tx.clone();
+
+        std::thread::spawn(move || {
+            let mut watcher =
+                recommended_watcher(move |res: std::result::Result<Event, notify::Error>| {
+                    match res {
+                        Ok(event) => {
+                            match event {
+                                Event {
+                                    kind: notify::event::EventKind::Create(_),
+                                    ..
+                                }
+                                | Event {
+                                    kind: notify::event::EventKind::Remove(_),
+                                    ..
+                                }
+                                | Event {
+                                    kind: notify::event::EventKind::Modify(_),
+                                    ..
+                                } => {
+                                    let _ = local_action_tx_clone.send(Actions::Reload); // You may want to define a custom action for reload
+                                }
+                                _ => {}
+                            }
+                        }
+                        Err(e) => {
+                            log::error!("watch error: {:?}", e);
+                        }
+                    }
+                })
+                .expect("Failed to create watcher");
+
+            watcher
+                .watch(&mod_dir, RecursiveMode::NonRecursive)
+                .expect("Failed to watch mod directory");
+
+            // Keep the thread alive
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(1));
+            }
+        });
 
         this
     }
     fn build_options(&mut self) {
-        self.mods.sort_by(|a, b| {
-            a.name.cmp(&b.name)
-        });
-        
+        self.mods.sort_by(|a, b| a.name.cmp(&b.name));
+
         self.options.options.clear();
-        
+
         self.mods.iter_mut().for_each(|m| {
             self.options.options.push(
                 vec![
                     OptionSelectorText::new(m.name.clone(), Style::default()),
-                    OptionSelectorText::new(format!(" {} ", m.version.clone()), Style::default().fg(Color::LightBlue)),
-                    OptionSelectorText::new(format!("by {}", m.author.clone().join(", ")), Style::default().fg(Color::DarkGray)),
-                ]
-                //                Span::styled(format!("{} {} by {:?}", m.name, m.version, m.author), Style::default().fg(Color::Green)),
+                    OptionSelectorText::new(
+                        format!(" {} ", m.version.clone()),
+                        Style::default().fg(Color::LightBlue),
+                    ),
+                    OptionSelectorText::new(
+                        format!("by {}", m.author.clone().join(", ")),
+                        Style::default().fg(Color::DarkGray),
+                    ),
+                ], //                Span::styled(format!("{} {} by {:?}", m.name, m.version, m.author), Style::default().fg(Color::Green)),
             );
             if !m.enabled.unwrap_or(true) {
-                self.options.options.last_mut().unwrap().push(OptionSelectorText::new(" (disabled)".to_string(), Style::default().fg(Color::Red)));
+                self.options
+                    .options
+                    .last_mut()
+                    .unwrap()
+                    .push(OptionSelectorText::new(
+                        " (disabled)".to_string(),
+                        Style::default().fg(Color::Red),
+                    ));
             }
         });
     }
@@ -85,7 +136,8 @@ impl Component for ModlistComponent {
     fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> Result<()> {
         self.action_tx = Some(tx.clone());
         self.options.register_action_handler(tx.clone())?;
-        self.options.register_local_action_handler(self.local_action_tx.clone())?;
+        self.options
+            .register_local_action_handler(self.local_action_tx.clone())?;
         Ok(())
     }
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
@@ -108,17 +160,32 @@ impl Component for ModlistComponent {
                             let m = &mut self.mods[c];
                             m.toggle_enabled();
                             self.build_options();
-                        },
+                        }
+                        Actions::Reload => {
+                            self.mods = ModList::get_local_mods();
+                            self.build_options();
+
+                            // remove any other reload requests from action queue
+                            while let Ok(a) = self.local_action_rx.try_recv() {
+                                if let Actions::Reload = a {
+                                } else {
+                                    // put back any other actions
+                                    let _ = self.local_action_tx.send(a);
+                                }
+                            }
+                        }
                     }
-                }                
-            },
+                }
+            }
             _ => {}
         }
         Ok(None)
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
-        self.options.draw(frame, area).expect("Options failed to draw!");
+        self.options
+            .draw(frame, area)
+            .expect("Options failed to draw!");
         Ok(())
     }
 

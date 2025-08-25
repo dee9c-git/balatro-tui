@@ -19,8 +19,12 @@ impl ModList {
         Self::default()
     }
 
+    pub fn get_local_mod_dir() -> PathBuf {
+        get_balatro_appdata_dir().join("Mods")
+    }
+
     pub fn get_local_mods() -> Vec<Mod> {
-        let mod_path = get_balatro_appdata_dir().join("Mods");
+        let mod_path = ModList::get_local_mod_dir();
 
         let mut mods = vec![];
         if let Some(dir) = std::fs::read_dir(mod_path.clone()).ok() {

@@ -2,8 +2,12 @@ use std::cmp::min;
 use std::ops::Add;
 use std::time::Instant;
 
+use super::{Component, Eventable};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
+use ratatui::style::{Color, Modifier};
+use ratatui::text::{Line, Text};
+use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Rect},
@@ -11,16 +15,13 @@ use ratatui::{
     text::Span,
     widgets::Paragraph,
 };
-use ratatui::style::{Color, Modifier};
-use ratatui::text::{Line, Text};
-use ratatui::widgets::{Block, BorderType, Borders};
 use tokio::sync::mpsc::UnboundedSender;
-use super::{Component, Eventable};
 
 use crate::action::Action;
 
 pub enum Actions {
-    Selected(usize)
+    Selected(usize),
+    Reload,
 }
 
 #[derive(Debug, Clone)]
@@ -31,10 +32,7 @@ pub struct OptionSelectorText {
 
 impl OptionSelectorText {
     pub fn new(text: String, style: Style) -> Self {
-        Self {
-            text,
-            style
-        }
+        Self { text, style }
     }
 }
 
@@ -49,8 +47,7 @@ pub struct OptionSelector {
     pub scroll_offset: usize,
 }
 
-impl Clone for OptionSelector
-{
+impl Clone for OptionSelector {
     fn clone(&self) -> Self {
         let mut s = Self::new(self.options.clone());
         s.selected = self.selected;
@@ -64,8 +61,7 @@ impl Clone for OptionSelector
     }
 }
 
-impl OptionSelector
-{
+impl OptionSelector {
     pub fn new(ops: Vec<Vec<OptionSelectorText>>) -> Self {
         Self {
             options: ops,
@@ -91,13 +87,16 @@ impl Component for OptionSelector {
                 if self.selected < self.options.len() {
                     self.scroll_offset = self.selected.saturating_sub(5);
                 }
-            },
+            }
             KeyCode::Down => {
-                self.selected = min(self.selected.saturating_add(1), (self.options.len().saturating_sub(1)));
+                self.selected = min(
+                    self.selected.saturating_add(1),
+                    (self.options.len().saturating_sub(1)),
+                );
                 if self.selected > 5 {
                     self.scroll_offset = self.selected.saturating_sub(5);
                 }
-            },
+            }
             KeyCode::Enter => {
                 if let Some(tx) = self.action_tx.as_ref() {
                     tx.send(Actions::Selected(self.selected))?;
@@ -110,8 +109,8 @@ impl Component for OptionSelector {
 
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
-            Action::Tick => {},
-            Action::Render => {},
+            Action::Tick => {}
+            Action::Render => {}
             _ => {}
         };
         Ok(None)
@@ -119,7 +118,10 @@ impl Component for OptionSelector {
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let mut op_i = 0;
-        let ops: Vec<Line> = self.options.clone().into_iter()
+        let ops: Vec<Line> = self
+            .options
+            .clone()
+            .into_iter()
             .map(|str| {
                 op_i += 1;
                 let mut lines = vec![];
@@ -136,7 +138,11 @@ impl Component for OptionSelector {
                 }
 
                 if lines.len() >= 1 && op_i == self.selected + 1 {
-                    lines[0] = lines[0].clone().style(Style::default().fg(Color::Green).add_modifier(Modifier::BOLD));
+                    lines[0] = lines[0].clone().style(
+                        Style::default()
+                            .fg(Color::Green)
+                            .add_modifier(Modifier::BOLD),
+                    );
                 }
 
                 Line::from(lines)
@@ -148,7 +154,11 @@ impl Component for OptionSelector {
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded)
                     .title(Span::from(&self.title))
-                    .border_style(if self.has_focus { Style::default().fg(Color::LightCyan) } else { Style::default().fg(Color::White) })
+                    .border_style(if self.has_focus {
+                        Style::default().fg(Color::LightCyan)
+                    } else {
+                        Style::default().fg(Color::White)
+                    }),
             )
             .scroll((self.scroll_offset as u16, 0));
 

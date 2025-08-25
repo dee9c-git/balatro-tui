@@ -1,23 +1,20 @@
-use std::cmp::min;
-use std::ops::Add;
 use std::path::PathBuf;
-use std::time::Instant;
 
+use super::Component;
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
-use ratatui::{
-    Frame,
-    layout::{Constraint, Layout, Rect},
-    style::{Style, Stylize},
-    text::Span,
-    widgets::Paragraph,
-};
 use ratatui::layout::Direction;
 use ratatui::style::{Color, Modifier};
 use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, BorderType, Borders};
+use ratatui::{
+    Frame,
+    layout::{Constraint, Layout, Rect},
+    style::Style,
+    text::Span,
+    widgets::Paragraph,
+};
 use tokio::sync::mpsc::UnboundedSender;
-use super::Component;
 
 use crate::action::Action;
 use crate::mods::Mod;
@@ -27,7 +24,7 @@ pub struct AuthoringTools {
     pub action_tx: Option<UnboundedSender<Action>>,
     pub has_focus: bool,
     pub mod_path: PathBuf,
-    edited_mod: Mod
+    edited_mod: Mod,
 }
 
 impl AuthoringTools {
@@ -58,10 +55,8 @@ impl Component for AuthoringTools {
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
         match key.code {
-            KeyCode::Up => {
-            },
-            KeyCode::Down => {
-            },
+            KeyCode::Up => {}
+            KeyCode::Down => {}
             _ => {}
         }
         Ok(None)
@@ -70,12 +65,9 @@ impl Component for AuthoringTools {
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(5),
-            ])
+            .constraints([Constraint::Length(3), Constraint::Min(5)])
             .split(area);
-        
+
         if self.edited_mod.id.is_empty() {
             frame.render_widget(
                 Paragraph::new(Line::from(vec![
@@ -103,25 +95,29 @@ impl Component for AuthoringTools {
                 //            Paragraph::new(format!("Currently editing mod \'{}\' by {}", self.edited_mod.name, self.edited_mod.author.join(", ")))
                 Paragraph::new(Line::from(vec![
                     Span::from("Currently editing mod "),
-                    Span::styled(self.edited_mod.name.clone(), Style::default().fg(Color::Yellow)),
-                    Span::from(" by "),
-                    Span::styled(self.edited_mod.author.join(", "), Style::default().fg(Color::Yellow)),
-                ]))
-                    .style(Style::default())
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .border_type(BorderType::Rounded)
-                            .border_style(
-                                if self.has_focus {
-                                    Style::default().fg(Color::LightCyan)
-                                } else {
-                                    Style::default().fg(Color::White)
-                                }
-                            )
-                            .title(format!("Editing mod at {}", self.mod_path.display()))
+                    Span::styled(
+                        self.edited_mod.name.clone(),
+                        Style::default().fg(Color::Yellow),
                     ),
-                chunks[0]
+                    Span::from(" by "),
+                    Span::styled(
+                        self.edited_mod.author.join(", "),
+                        Style::default().fg(Color::Yellow),
+                    ),
+                ]))
+                .style(Style::default())
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(BorderType::Rounded)
+                        .border_style(if self.has_focus {
+                            Style::default().fg(Color::LightCyan)
+                        } else {
+                            Style::default().fg(Color::White)
+                        })
+                        .title(format!("Editing mod at {}", self.mod_path.display())),
+                ),
+                chunks[0],
             );
         }
 

@@ -128,6 +128,7 @@ impl Component for QuickOptions {
                             }
                             _ => {}
                         },
+                        Actions::Reload => todo!(),
                     }
                 }
             }
