@@ -19,7 +19,7 @@ jobs:
     - name: Rust Release binary
       uses: rust-build/rust-build.action@v1.4.5
       with:
-        TOOLCHAIN_VERSION: stable
+        TOOLCHAIN_VERSION: nightly
   release:
     name: release ${{ matrix.target }}
     runs-on: ubuntu-latest
