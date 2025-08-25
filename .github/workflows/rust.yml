@@ -18,7 +18,8 @@ jobs:
       run: cargo build --release
     - name: Rust Release binary
       uses: rust-build/rust-build.action@v1.4.5
-      
+      with:
+        TOOLCHAIN_VERSION: stable
   release:
     name: release ${{ matrix.target }}
     runs-on: ubuntu-latest
