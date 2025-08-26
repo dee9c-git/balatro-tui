@@ -53,39 +53,35 @@ impl ModlistComponent {
         this.mods = ModList::get_local_mods();
         this.build_options();
 
-        // Watch the mod directory for changes using notify
         let mod_dir = ModList::get_local_mod_dir().as_path().to_path_buf();
         let local_action_tx_clone = this.local_action_tx.clone();
 
         std::thread::spawn(move || {
-            let mut watcher =
-                recommended_watcher(move |res: std::result::Result<Event, notify::Error>| {
-                    match res {
-                        Ok(event) => {
-                            match event {
-                                Event {
-                                    kind: notify::event::EventKind::Create(_),
-                                    ..
-                                }
-                                | Event {
-                                    kind: notify::event::EventKind::Remove(_),
-                                    ..
-                                }
-                                | Event {
-                                    kind: notify::event::EventKind::Modify(_),
-                                    ..
-                                } => {
-                                    let _ = local_action_tx_clone.send(Actions::Reload); // You may want to define a custom action for reload
-                                }
-                                _ => {}
-                            }
+            let mut watcher = recommended_watcher(
+                move |res: std::result::Result<Event, notify::Error>| match res {
+                    Ok(event) => match event {
+                        Event {
+                            kind: notify::event::EventKind::Create(_),
+                            ..
                         }
-                        Err(e) => {
-                            log::error!("watch error: {:?}", e);
+                        | Event {
+                            kind: notify::event::EventKind::Remove(_),
+                            ..
                         }
+                        | Event {
+                            kind: notify::event::EventKind::Modify(_),
+                            ..
+                        } => {
+                            let _ = local_action_tx_clone.send(Actions::Reload);
+                        }
+                        _ => {}
+                    },
+                    Err(e) => {
+                        log::error!("watch error: {:?}", e);
                     }
-                })
-                .expect("Failed to create watcher");
+                },
+            )
+            .expect("Failed to create watcher");
 
             watcher
                 .watch(&mod_dir, RecursiveMode::NonRecursive)
