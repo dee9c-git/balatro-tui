@@ -195,16 +195,20 @@ impl Component for RemoteModsComponent {
                         let temp_file = download_to_tmp(&*remote_mod.download_url).await;
                         let file = temp_file.as_file();
 
-                        unzip(
+                        match unzip(
                             file,
                             &get_balatro_appdata_dir().join("Mods"),
                             &remote_mod.folder_name,
-                        );
-
-                        info!(
-                            "Successfully installed {} {}",
-                            remote_mod.title, remote_mod.version
-                        );
+                        ) {
+                            Ok(_) => info!(
+                                "Successfully installed {} {}",
+                                remote_mod.title, remote_mod.version
+                            ),
+                            Err(e) => log::error!(
+                                "Failed to install {}: {}",
+                                remote_mod.title, e
+                            ),
+                        }
                     });
 
                     self.state = State::Normal;

@@ -6,7 +6,7 @@ use reqwest::get;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Seek, Write};
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::process::{Child, Command};
@@ -157,7 +157,16 @@ pub async fn download_to_tmp(url: &str) -> NamedTempFile {
     tmpfile
 }
 
-pub fn unzip(file: &File, base_path: &PathBuf, dir_name: &str) {
+pub fn unzip(mut file: &File, base_path: &PathBuf, dir_name: &str) -> Result<(), String> {
+    let mut magic = [0u8; 4];
+    let n = file
+        .read(&mut magic)
+        .map_err(|e| format!("failed to read archive: {}", e))?;
+    if n != 4 || (magic != *b"PK\x03\x04" && magic != *b"PK\x05\x06" && magic != *b"PK\x07\x08") {
+        return Err(String::from("file is not a zip archive"));
+    }
+    file.rewind().unwrap();
+
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
     let target_path = base_path.join(dir_name);
@@ -187,6 +196,8 @@ pub fn unzip(file: &File, base_path: &PathBuf, dir_name: &str) {
 
         fs::remove_dir(dir).expect("failed to remove dir");
     }
+
+    Ok(())
 }
 
 pub async fn install_lovely() {
