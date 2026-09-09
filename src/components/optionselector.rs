@@ -1,4 +1,3 @@
-use std::cmp::min;
 use std::ops::Add;
 use std::time::Instant;
 
@@ -83,16 +82,19 @@ impl Component for OptionSelector {
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
         match key.code {
             KeyCode::Up => {
-                self.selected = self.selected.saturating_sub(1);
+                let len = self.options.len();
+                if len > 1 {
+                    self.selected = (self.selected + len - 1) % len;
+                }
                 if self.selected < self.options.len() {
                     self.scroll_offset = self.selected.saturating_sub(5);
                 }
             }
             KeyCode::Down => {
-                self.selected = min(
-                    self.selected.saturating_add(1),
-                    (self.options.len().saturating_sub(1)),
-                );
+                let len = self.options.len();
+                if len > 1 {
+                    self.selected = (self.selected + 1) % len;
+                }
                 if self.selected > 5 {
                     self.scroll_offset = self.selected.saturating_sub(5);
                 }

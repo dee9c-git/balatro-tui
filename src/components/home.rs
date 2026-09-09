@@ -16,16 +16,6 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
 use tui_logger::TuiLoggerWidget;
 
-#[derive(Default)]
-enum Focused {
-    #[default]
-    Modes,
-    InstalledMods,
-    RemoteMods,
-    Authoring,
-    Quicks,
-}
-
 pub struct Home {
     command_tx: Option<UnboundedSender<Action>>,
     config: Config,
@@ -33,7 +23,6 @@ pub struct Home {
     installed_mod_selector: ModlistComponent,
     remote_mod_selector: RemoteModsComponent,
     mode_selector: OptionSelector,
-    focused: Focused,
     authoring: AuthoringTools,
     has_focus: bool,
     catalog_fetched: bool,
@@ -64,7 +53,7 @@ impl Home {
         ]);
 
         mode_selector.has_focus = true;
-        mode_selector.title = "Modes".to_string();
+        mode_selector.title = "Modes (Move with Tab/Shift+Tab)".to_string();
 
         let authoring = AuthoringTools::new();
 
@@ -72,7 +61,7 @@ impl Home {
 
         let remote_mod_selector = RemoteModsComponent::new();
 
-        Self {
+        let mut this = Self {
             installed_mod_selector,
             remote_mod_selector,
             mode_selector,
@@ -80,10 +69,48 @@ impl Home {
             quick_ops,
             command_tx: None,
             config: Config::default(),
-            focused: Focused::Modes,
             has_focus: false,
             catalog_fetched: false,
             catalog: Vec::new(),
+        };
+        this.focus_selected();
+        this
+    }
+
+    fn select_mode(&mut self, down: bool) {
+        self.unfocus_selected();
+        let len = self.mode_selector.options.len();
+        if len > 1 {
+            if down {
+                self.mode_selector.selected = (self.mode_selector.selected + 1) % len;
+            } else {
+                self.mode_selector.selected =
+                    (self.mode_selector.selected + len - 1) % len;
+            }
+        }
+        if self.mode_selector.selected > 5 {
+            self.mode_selector.scroll_offset = self.mode_selector.selected.saturating_sub(5);
+        }
+        self.focus_selected();
+    }
+
+    fn focus_selected(&mut self) {
+        match self.mode_selector.selected {
+            0 => self.quick_ops.focus(),
+            1 => self.installed_mod_selector.focus(),
+            2 => self.remote_mod_selector.focus(),
+            3 => self.authoring.focus(),
+            _ => {}
+        }
+    }
+
+    fn unfocus_selected(&mut self) {
+        match self.mode_selector.selected {
+            0 => self.quick_ops.unfocus(),
+            1 => self.installed_mod_selector.unfocus(),
+            2 => self.remote_mod_selector.unfocus(),
+            3 => self.authoring.unfocus(),
+            _ => {}
         }
     }
 }
@@ -112,75 +139,27 @@ impl Component for Home {
     }
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
-        match self.focused {
-            Focused::Modes => {
-                match key.code {
-                    KeyCode::Right => {
-                        match self.mode_selector.selected {
-                            0 => {
-                                self.focused = Focused::Quicks;
-                                self.quick_ops.focus();
-                            }
-                            1 => {
-                                self.focused = Focused::InstalledMods;
-                                self.installed_mod_selector.focus();
-                            }
-                            2 => {
-                                self.focused = Focused::RemoteMods;
-                                self.remote_mod_selector.focus();
-                            }
-                            3 => {
-                                self.focused = Focused::Authoring;
-                                self.authoring.focus();
-                            }
-                            _ => {}
-                        }
-                        self.mode_selector.has_focus = false;
-                    }
-                    _ => {
-                        let _ = self.mode_selector.handle_key_event(key);
-                    }
-                }
+        match key.code {
+            KeyCode::Tab => {
+                self.select_mode(true);
             }
-            Focused::Quicks => match key.code {
-                KeyCode::Left => {
-                    self.focused = Focused::Modes;
-                    self.quick_ops.unfocus();
-                    self.mode_selector.focus();
-                }
-                _ => {
+            KeyCode::BackTab => {
+                self.select_mode(false);
+            }
+            _ => match self.mode_selector.selected {
+                0 => {
                     let _ = self.quick_ops.handle_key_event(key);
                 }
-            },
-            Focused::InstalledMods => match key.code {
-                KeyCode::Left => {
-                    self.focused = Focused::Modes;
-                    self.installed_mod_selector.unfocus();
-                    self.mode_selector.focus();
-                }
-                _ => {
+                1 => {
                     let _ = self.installed_mod_selector.handle_key_event(key);
                 }
-            },
-            Focused::RemoteMods => match key.code {
-                KeyCode::Left => {
-                    self.focused = Focused::Modes;
-                    self.remote_mod_selector.unfocus();
-                    self.mode_selector.focus();
-                }
-                _ => {
+                2 => {
                     let _ = self.remote_mod_selector.handle_key_event(key);
                 }
-            },
-            Focused::Authoring => match key.code {
-                KeyCode::Left => {
-                    self.focused = Focused::Modes;
-                    self.authoring.unfocus();
-                    self.mode_selector.focus();
-                }
-                _ => {
+                3 => {
                     let _ = self.authoring.handle_key_event(key);
                 }
+                _ => {}
             },
         }
         Ok(None)
