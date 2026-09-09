@@ -18,7 +18,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::action::Action;
 use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
 use crate::components::textinput::TextInput;
-use crate::mods::{ModList, RemoteMod};
+use balatro_tui::RemoteMod;
 
 #[derive(Default)]
 enum State {
@@ -71,8 +71,8 @@ impl RemoteModsComponent {
 
         this
     }
-    pub fn setup_mods(&mut self) {
-        self.mods = ModList::get_remote_mods();
+    pub fn update_mods(&mut self, mods: Vec<RemoteMod>) {
+        self.mods = mods;
         self.displayed_mods = self.mods.clone();
         self.build_options();
     }

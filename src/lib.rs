@@ -1,20 +1,78 @@
 pub mod motd;
 
-use git2::build::CheckoutBuilder;
-use git2::{FetchOptions, RemoteCallbacks, Repository};
-use home::home_dir;
-use log::{error, info, warn};
+use log::{error, info};
 use platform_dirs::AppDirs;
 use reqwest::get;
-use std::error::Error;
+use serde::{Deserialize, Serialize};
+use std::fs;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::process::{Child, Command};
-use std::{fs, thread};
 use tempfile::NamedTempFile;
+
+const MOD_CATALOG_URL: &str = "https://bmi-smm.dee9c.com/catalog.json";
+
+pub fn catalog_cache_path() -> PathBuf {
+    if let Some(proj_dirs) =
+        directories::ProjectDirs::from("net", "sealsearch", env!("CARGO_PKG_NAME"))
+    {
+        proj_dirs.data_local_dir().join("catalog.json")
+    } else {
+        PathBuf::from(".").join(".data").join("catalog.json")
+    }
+}
+
+pub fn save_catalog(mods: &[RemoteMod]) {
+    if let Ok(json) = serde_json::to_string_pretty(mods) {
+        if let Err(e) = fs::write(catalog_cache_path(), json) {
+            error!("Failed to cache catalog: {}", e);
+        }
+    }
+}
+
+pub fn load_catalog() -> Vec<RemoteMod> {
+    match fs::read(catalog_cache_path()) {
+        Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_else(|e| {
+            error!("Failed to parse cached catalog: {}", e);
+            vec![]
+        }),
+        Err(_) => vec![],
+    }
+}
+
+#[derive(Deserialize, Serialize, Default, Debug, Clone)]
+pub struct RemoteMod {
+    pub title: String,
+    pub version: String,
+    pub author: String,
+    pub categories: Vec<String>,
+    pub repo: String,
+    #[serde(rename = "downloadURL")]
+    pub download_url: String,
+    #[serde(rename = "folderName")]
+    pub folder_name: String,
+    pub identifier: String,
+}
+
+pub async fn fetch_catalog() -> Vec<RemoteMod> {
+    match get(MOD_CATALOG_URL).await {
+        Ok(resp) => {
+            if let Ok(catalog) = resp.json::<Vec<RemoteMod>>().await {
+                info!("Fetched {} mods from catalog", catalog.len());
+                catalog
+            } else {
+                error!("Failed to parse mod catalog");
+                vec![]
+            }
+        }
+        Err(e) => {
+            error!("Failed to fetch mod catalog: {}", e);
+            vec![]
+        }
+    }
+}
 
 pub fn launch_balatro(disable_console: bool) -> Result<Child, std::io::Error> {
     #[cfg(unix)]
@@ -36,21 +94,6 @@ pub fn launch_balatro(disable_console: bool) -> Result<Child, std::io::Error> {
 }
 
 pub fn open(path: &str) {
-    // let mut child = Command::new("xdg-open")
-    //     .arg(path)
-    //     .stderr(Stdio::piped())
-    //     .spawn().expect("failed to execute process xdg-open");
-    //
-    // if let Some(stderr) = child.stderr.take() {
-    //     let reader = BufReader::new(stderr);
-    //     thread::spawn(move || {
-    //         for line in reader.lines() {
-    //             if let Ok(line) = line {
-    //                 error!("xdg-open error: {}", line);
-    //             }
-    //         }
-    //     });
-    // }
     if let Err(e) = opener::open(path) {
         error!("failed to open: {}", e);
     }
@@ -96,44 +139,6 @@ pub fn get_balatro_appdata_dir() -> PathBuf {
         let balatro = AppDirs::new(Some("Balatro"), false).expect("failed to locate balatro");
         balatro.config_dir
     }
-}
-
-pub fn clone_online_mod_list(to: PathBuf) -> Result<Repository, git2::Error> {
-    let url = "https://github.com/skyline69/balatro-mod-index.git";
-    let repo = Repository::clone(url, to);
-
-    repo
-}
-
-pub fn get_repo_at(path: &PathBuf) -> Option<Repository> {
-    let repo = Repository::open(path);
-
-    repo.ok()
-}
-
-pub fn update_repo(repo: &Repository) -> Result<(), git2::Error> {
-    let mut remote = repo.find_remote("origin")?;
-
-    let mut fetch_options = FetchOptions::new();
-    fetch_options.download_tags(git2::AutotagOption::All);
-
-    remote.fetch(&["main"], Some(&mut fetch_options), None)?;
-
-    let fetch_head = repo.find_reference("FETCH_HEAD")?;
-    let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
-
-    let commit = repo.find_commit(fetch_commit.id())?;
-
-    let mut checkout = CheckoutBuilder::new();
-    checkout.force();
-
-    repo.reset(
-        commit.as_object(),
-        git2::ResetType::Hard,
-        Some(&mut checkout),
-    )?;
-
-    Ok(())
 }
 
 pub async fn download_to_tmp(url: &str) -> NamedTempFile {
@@ -187,9 +192,6 @@ pub fn unzip(file: &File, base_path: &PathBuf, dir_name: &str) {
 pub async fn install_lovely() {
     info!("Downloading Lovely...");
 
-    // download windows verison
-    // because linux uses proton,
-    // it will also use the windows dll.
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     {
         let file = download_to_tmp("https://github.com/ethangreen-dev/lovely-injector/releases/latest/download/lovely-x86_64-pc-windows-msvc.zip").await;
@@ -202,8 +204,6 @@ pub async fn install_lovely() {
 
         let mut archive = zip::ZipArchive::new(file.as_file()).expect("failed to open zip archive");
 
-        // archive only has one file, version.dll
-
         let mut file = archive
             .by_name("version.dll")
             .expect("failed to find version.dll in zip archive");
@@ -212,7 +212,6 @@ pub async fn install_lovely() {
         std::io::copy(&mut file, &mut target_file)
             .expect("failed to copy version.dll to target path");
     }
-    // macos version
     #[cfg(target_os = "macos")]
     {
         unimplemented!()

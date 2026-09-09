@@ -1,18 +1,12 @@
-use crate::config::get_data_dir;
 use balatro_tui::get_balatro_appdata_dir;
-use git2::Repository;
-use log::{error, info};
+use log::error;
 use serde::Deserialize;
-use serde::de::DeserializeOwned;
-use serde_json::Value;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 #[derive(Default)]
-pub struct ModList {
-    repo: Option<Repository>,
-}
+pub struct ModList;
 
 impl ModList {
     pub fn new() -> Self {
@@ -51,8 +45,6 @@ impl ModList {
                         if let Some(mut mod_obj) = Mod::from_file(&file.path()) {
                             if mod_obj.id.is_empty() {
                                 if mod_obj.name == "Steamodded" {
-                                    // HACK as Steamodded does not currently have a full
-                                    // mod metadata json.
                                     mod_obj.id = "steamodded".to_string();
                                     mod_obj.version = "1.0.0".to_string();
                                     mod_obj.enabled = Some(mod_obj.get_enabled());
@@ -60,13 +52,8 @@ impl ModList {
                                     mod_obj.author =
                                         vec!["the Steamodded contributors".to_string()];
 
-                                    // get version from version.lua
-                                    // version.lua format is literally just
-                                    // return "1.0.0~BETA-0614a-STEAMODDED"
-
                                     let f = File::open(path.join("version.lua")).unwrap();
                                     let reader = BufReader::new(f);
-                                    // This feels bad to be doing *but* it works.
                                     mod_obj.version = reader
                                         .lines()
                                         .nth(0)
@@ -108,31 +95,6 @@ impl ModList {
         }
         mods
     }
-
-    pub fn get_remote_mods() -> Vec<RemoteMod> {
-        let mut mods = vec![];
-
-        let mut mods_dir = get_data_dir();
-        mods_dir.extend(
-            ["mods", "mods"], // mods folder inside the repository
-        );
-
-        if let Some(dir) = std::fs::read_dir(mods_dir.clone()).ok() {
-            for entry in dir {
-                let entry = entry.unwrap();
-                let path = entry.path();
-
-                if !path.is_dir() {
-                    continue;
-                }
-                if let Some(mod_obj) = RemoteMod::from_directory(&path) {
-                    mods.push(mod_obj);
-                }
-            }
-        }
-
-        mods
-    }
 }
 
 #[derive(Default, Debug, Deserialize)]
@@ -140,7 +102,7 @@ impl ModList {
 pub struct Mod {
     pub id: String,
     pub name: String,
-    #[serde(default)] // Not in JSON
+    #[serde(default)]
     pub folder: PathBuf,
     pub description: String,
     pub version: String,
@@ -238,70 +200,5 @@ impl Mod {
                 .expect("Failed to remove .lovelyignore file");
             self.enabled = Some(true);
         }
-    }
-}
-
-#[derive(Deserialize, Default, Debug)]
-#[serde(default)]
-#[derive(Clone)]
-pub struct RemoteMod {
-    pub title: String,
-    pub version: String,
-    pub author: String,
-    pub categories: Vec<String>,
-    pub repo: String,
-    #[serde(rename = "downloadURL")]
-    pub download_url: String,
-    #[serde(rename = "folderName")]
-    pub folder_name: String,
-    pub identifier: String,
-}
-
-impl RemoteMod {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    pub fn from_json(json: &Value) -> Option<Self> {
-        let result = serde_json::from_value(json.clone());
-        if let Err(e) = &result {
-            println!("Error parsing JSON: {}", e);
-        }
-        Some(result.ok()?)
-    }
-
-    pub fn from_directory(path: &Path) -> Option<Self> {
-        let mut found_mod = RemoteMod::new();
-
-        for file in std::fs::read_dir(&path).unwrap() {
-            let file = file.unwrap();
-            let filepath = file.path();
-            if !filepath.is_file() {
-                continue;
-            }
-            if let Some(filename) = filepath.file_name().and_then(|e| e.to_str()) {
-                if filename == "meta.json" {
-                    let reader = BufReader::new(File::open(&filepath).unwrap());
-                    let json: Value = serde_json::from_reader(reader).ok()?;
-                    found_mod = RemoteMod::from_json(&json)?;
-                }
-            }
-        }
-
-        found_mod.identifier = path.file_name()?.to_str()?.to_string();
-
-        Some(Self {
-            title: found_mod.title.clone(),
-            version: found_mod.version.clone(),
-            author: found_mod.author,
-            categories: found_mod.categories,
-            repo: found_mod.repo,
-            download_url: found_mod.download_url,
-            folder_name: if found_mod.folder_name != "" {
-                found_mod.folder_name
-            } else {
-                found_mod.title
-            },
-            identifier: found_mod.identifier,
-        })
     }
 }

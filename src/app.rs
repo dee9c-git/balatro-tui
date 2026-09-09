@@ -132,7 +132,7 @@ impl App {
 
     fn handle_actions(&mut self, tui: &mut Tui) -> Result<()> {
         while let Ok(action) = self.action_rx.try_recv() {
-            if action != Action::Tick && action != Action::Render {
+            if !matches!(action, Action::Tick | Action::Render) {
                 debug!("{action:?}");
             }
             match action {

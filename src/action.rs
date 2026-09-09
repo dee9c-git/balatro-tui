@@ -1,7 +1,8 @@
+use balatro_tui::RemoteMod;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-#[derive(Debug, Clone, PartialEq, Eq, Display, Serialize, Deserialize)]
+#[derive(Debug, Clone, Display, Serialize, Deserialize)]
 pub enum Action {
     Tick,
     Render,
@@ -12,4 +13,5 @@ pub enum Action {
     ClearScreen,
     Error(String),
     Help,
+    CatalogFetched(Vec<RemoteMod>),
 }

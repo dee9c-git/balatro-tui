@@ -1,25 +1,18 @@
-use crate::action;
 use crate::action::Action;
 use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
 use crate::components::{Component, Eventable};
-use crate::config::{Config, get_config_dir, get_data_dir};
-use crate::tui::Event;
+use crate::config::get_data_dir;
 use balatro_tui::{get_balatro_appdata_dir, get_balatro_dir, install_lovely, launch_balatro, open};
-use crossterm::event::{KeyCode, KeyEvent, MouseEvent};
+use color_eyre::Result;
+use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use ratatui::layout::{Rect, Size};
+use ratatui::layout::Rect;
 use ratatui::prelude::Color;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
-use std::cell::RefCell;
-use std::io::{BufReader, Error};
-use std::process::{Command, Stdio};
-use std::rc::Rc;
-use tokio::process::Child;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use tracing::error;
 
 pub struct QuickOptions {
     pub options: OptionSelector,
