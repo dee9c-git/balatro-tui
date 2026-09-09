@@ -17,18 +17,22 @@ use std::{fs, thread};
 use tempfile::NamedTempFile;
 
 pub fn launch_balatro(disable_console: bool) -> Result<Child, std::io::Error> {
+    #[cfg(unix)]
+    use std::os::unix::process::CommandExt;
+
+    let mut cmd = Command::new("steam");
+    cmd.arg("-applaunch")
+        .arg("2379780")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
     if disable_console {
-        Command::new("steam")
-            .arg("-applaunch")
-            .arg("2379780")
-            .arg("--disable-console")
-            .spawn()
-    } else {
-        Command::new("steam")
-            .arg("-applaunch")
-            .arg("2379780")
-            .spawn()
+        cmd.arg("--disable-console");
     }
+    #[cfg(unix)]
+    cmd.process_group(0);
+
+    cmd.spawn()
 }
 
 pub fn open(path: &str) {
