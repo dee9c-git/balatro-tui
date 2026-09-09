@@ -6,10 +6,11 @@ use crate::components::optionselector::{OptionSelector, OptionSelectorText};
 use crate::components::quickoptions::QuickOptions;
 use crate::components::remotemods::RemoteModsComponent;
 use crate::config::Config;
-use balatro_tui::{fetch_catalog, load_catalog, motd::motd, save_catalog};
+use crate::mods::{is_same_mod, ModList};
+use balatro_tui::{fetch_catalog, load_catalog, motd::motd, reinstall_mod, save_catalog, RemoteMod};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
-use log::info;
+use log::{error, info};
 use ratatui::{prelude::*, widgets::*};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
@@ -36,6 +37,7 @@ pub struct Home {
     authoring: AuthoringTools,
     has_focus: bool,
     catalog_fetched: bool,
+    catalog: Vec<RemoteMod>,
 }
 
 impl Home {
@@ -81,6 +83,7 @@ impl Home {
             focused: Focused::Modes,
             has_focus: false,
             catalog_fetched: false,
+            catalog: Vec::new(),
         }
     }
 }
@@ -188,8 +191,9 @@ impl Component for Home {
             Action::Tick => {
                 if !self.catalog_fetched {
                     self.catalog_fetched = true;
+                    self.catalog = load_catalog();
                     self.remote_mod_selector
-                        .update_mods(load_catalog());
+                        .update_mods(self.catalog.clone());
                     if let Some(tx) = self.command_tx.clone() {
                         tokio::spawn(async move {
                             info!("Rerolling for mods...");
@@ -212,7 +216,33 @@ impl Component for Home {
                 }
             }
             Action::CatalogFetched(ref mods) => {
+                self.catalog = mods.clone();
                 self.remote_mod_selector.update_mods(mods.clone());
+            }
+            Action::ReinstallMods => {
+                let catalog = self.catalog.clone();
+                if catalog.is_empty() {
+                    error!("No mod catalog loaded, refusing to reinstall.");
+                } else {
+                    tokio::spawn(async move {
+                        let installed = ModList::get_local_mods();
+                        for m in &installed {
+                            match catalog.iter().find(|r| is_same_mod(m, r)) {
+                                Some(remote) => {
+                                    info!("Reinstalling {}...", remote.title);
+                                    let disabled = m.folder.join(".lovelyignore").exists();
+                                    if let Err(e) = reinstall_mod(remote, disabled).await {
+                                        error!("Failed to reinstall {}: {}", remote.title, e);
+                                    }
+                                }
+                                None => {
+                                    info!("{} not in the index, skipping...", m.name);
+                                }
+                            }
+                        }
+                        info!("All mods reinstalled.");
+                    });
+                }
             }
             _ => {}
         }

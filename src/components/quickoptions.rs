@@ -57,6 +57,10 @@ impl QuickOptions {
                 "Install/Update Lovely".to_string(),
                 Style::default(),
             )],
+            vec![OptionSelectorText::new(
+                "Reinstall/Update All Mods".to_string(),
+                Style::default(),
+            )],
         ]);
 
         options.title = "Quick Options".to_string();
@@ -118,6 +122,11 @@ impl Component for QuickOptions {
                                 tokio::spawn(async move {
                                     install_lovely().await;
                                 });
+                            }
+                            6 => {
+                                if let Some(tx) = self.action_tx.clone() {
+                                    let _ = tx.send(Action::ReinstallMods);
+                                }
                             }
                             _ => {}
                         },

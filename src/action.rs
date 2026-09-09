@@ -14,4 +14,5 @@ pub enum Action {
     Error(String),
     Help,
     CatalogFetched(Vec<RemoteMod>),
+    ReinstallMods,
 }

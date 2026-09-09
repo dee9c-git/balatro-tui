@@ -1,4 +1,4 @@
-use balatro_tui::get_balatro_appdata_dir;
+use balatro_tui::{get_balatro_appdata_dir, RemoteMod};
 use log::error;
 use serde::Deserialize;
 use std::fs::File;
@@ -95,6 +95,40 @@ impl ModList {
         }
         mods
     }
+}
+
+fn normalize_ident(s: &str) -> String {
+    s.chars()
+        .map(|c| c.to_lowercase())
+        .flatten()
+        .filter(|c| c.is_alphanumeric())
+        .collect()
+}
+
+pub fn is_same_mod(local: &Mod, remote: &RemoteMod) -> bool {
+    let folder_name = local
+        .folder
+        .file_name()
+        .and_then(|n| n.to_str())
+        .map(str::to_string)
+        .unwrap_or_default();
+
+    let author_matches = local.author.iter().any(|a| {
+        remote
+            .author
+            .split([',', ';'])
+            .map(str::trim)
+            .any(|r| r.eq_ignore_ascii_case(a.trim()))
+    });
+
+    let slug = remote.folder_name.rsplit('@').next().unwrap_or("");
+
+    let folder_exact = folder_name == remote.folder_name;
+    let name_author =
+        local.name.eq_ignore_ascii_case(&remote.title) && author_matches;
+    let id_slug = normalize_ident(&local.id) == normalize_ident(slug);
+
+    folder_exact || name_author || id_slug
 }
 
 #[derive(Default, Debug, Deserialize)]

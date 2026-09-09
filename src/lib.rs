@@ -158,6 +158,7 @@ pub async fn download_to_tmp(url: &str) -> NamedTempFile {
 }
 
 pub fn unzip(mut file: &File, base_path: &PathBuf, dir_name: &str) -> Result<(), String> {
+    file.rewind().unwrap();
     let mut magic = [0u8; 4];
     let n = file
         .read(&mut magic)
@@ -165,7 +166,6 @@ pub fn unzip(mut file: &File, base_path: &PathBuf, dir_name: &str) -> Result<(),
     if n != 4 || (magic != *b"PK\x03\x04" && magic != *b"PK\x05\x06" && magic != *b"PK\x07\x08") {
         return Err(String::from("file is not a zip archive"));
     }
-    file.rewind().unwrap();
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
@@ -195,6 +195,25 @@ pub fn unzip(mut file: &File, base_path: &PathBuf, dir_name: &str) -> Result<(),
         }
 
         fs::remove_dir(dir).expect("failed to remove dir");
+    }
+
+    Ok(())
+}
+
+pub async fn reinstall_mod(remote: &RemoteMod, disabled: bool) -> Result<(), String> {
+    let temp_file = download_to_tmp(&remote.download_url).await;
+    let file = temp_file.as_file();
+
+    let mods_dir = get_balatro_appdata_dir().join("Mods");
+
+    unzip(file, &mods_dir, &remote.folder_name)?;
+
+    if disabled {
+        let ignore = mods_dir
+            .join(&remote.folder_name)
+            .join(".lovelyignore");
+        fs::File::create(ignore)
+            .map_err(|e| format!("failed to write .lovelyignore: {}", e))?;
     }
 
     Ok(())
