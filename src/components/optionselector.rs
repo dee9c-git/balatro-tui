@@ -173,10 +173,13 @@ impl Component for OptionSelector {
             let [_, items_area] =
                 Layout::horizontal([Constraint::Ratio(1, 4), Constraint::Min(0)]).areas(inner);
             let spaced = self.flex == Flex::SpaceBetween;
-            let item_rows: Vec<Line> = ops
-                .iter()
-                .flat_map(|l| [l.clone(), Line::from("")])
-                .collect();
+            let item_rows: Vec<Line> = if spaced {
+                ops.iter()
+                    .flat_map(|l| [l.clone(), Line::from("")])
+                    .collect()
+            } else {
+                ops.clone()
+            };
             let rows = Layout::vertical(vec![Constraint::Length(1); item_rows.len()])
                 .flex(self.flex)
                 .split(items_area);

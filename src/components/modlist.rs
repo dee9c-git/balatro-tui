@@ -107,7 +107,7 @@ impl ModlistComponent {
                     OptionSelectorText::new(m.name.clone(), Style::default()),
                     OptionSelectorText::new(
                         format!(" {} ", m.version.clone()),
-                        Style::default().fg(Color::LightBlue),
+                        Style::default().fg(Color::LightRed),
                     ),
                     OptionSelectorText::new(
                         format!("by {}", m.author.clone().join(", ")),
