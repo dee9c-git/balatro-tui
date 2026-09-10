@@ -5,6 +5,7 @@ use super::{Component, Eventable};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::style::{Color, Modifier};
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
@@ -154,8 +155,9 @@ impl Component for OptionSelector {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .border_type(BorderType::Rounded)
-                    .title(Span::from(&self.title))
+                    .border_type(BorderType::Thick)
+                    .merge_borders(MergeStrategy::Exact)
+                    .title(Line::from(self.title.as_str()).centered())
                     .border_style(if self.has_focus {
                         Style::default().fg(Color::LightCyan)
                     } else {

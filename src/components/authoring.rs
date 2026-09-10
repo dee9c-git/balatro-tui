@@ -5,11 +5,12 @@ use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Direction;
 use ratatui::style::{Color, Modifier};
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Layout, Rect, Spacing},
     style::Style,
     text::Span,
     widgets::Paragraph,
@@ -66,6 +67,7 @@ impl Component for AuthoringTools {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(3), Constraint::Min(5)])
+            .spacing(Spacing::Overlap(1))
             .split(area);
 
         if self.edited_mod.id.is_empty() {
@@ -79,7 +81,8 @@ impl Component for AuthoringTools {
                     .block(
                         Block::default()
                             .borders(Borders::ALL)
-                            .border_type(BorderType::Rounded)
+                            .border_type(BorderType::Thick)
+                            .merge_borders(MergeStrategy::Exact)
                             .border_style(
                                 if self.has_focus {
                                     Style::default().fg(Color::LightCyan)
@@ -109,13 +112,14 @@ impl Component for AuthoringTools {
                 .block(
                     Block::default()
                         .borders(Borders::ALL)
-                        .border_type(BorderType::Rounded)
+                        .border_type(BorderType::Thick)
+                        .merge_borders(MergeStrategy::Exact)
                         .border_style(if self.has_focus {
                             Style::default().fg(Color::LightCyan)
                         } else {
                             Style::default().fg(Color::White)
                         })
-                        .title(format!("Editing mod at {}", self.mod_path.display())),
+                        .title(Line::from(format!("Editing mod at {}", self.mod_path.display())).centered()),
                 ),
                 chunks[0],
             );

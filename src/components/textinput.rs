@@ -1,11 +1,12 @@
+use crate::action::Action;
+use crate::components::Component;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Rect, Size};
 use ratatui::style::{Color, Style};
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Paragraph};
-use crate::action::Action;
-use crate::components::Component;
 
 #[derive(Default)]
 pub struct TextInput {
@@ -44,32 +45,34 @@ impl Component for TextInput {
             KeyCode::Backspace => {
                 self.text.pop();
             }
-            
-            _ => {  },
+
+            _ => {}
         }
-        
+
         Ok(None)
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> color_eyre::Result<()> {
         frame.render_widget(
-            Paragraph::new(
-                if self.text.is_empty() {
-                    Line::from(self.placeholder.clone()).style(Style::default().fg(Color::Gray))
-                } else {
-                    Line::from(self.text.clone())
-                }
-            )
-                .block(
-                    Block::bordered()
-                        .border_type(BorderType::Rounded)
-                        .border_style(Style::default().fg(if self.focused { Color::LightCyan } else { Color::White }))
-                        .title(self.title.clone())
-                )
-            ,
-            area
+            Paragraph::new(if self.text.is_empty() {
+                Line::from(self.placeholder.clone()).style(Style::default().fg(Color::Gray))
+            } else {
+                Line::from(self.text.clone())
+            })
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Thick)
+                    .merge_borders(MergeStrategy::Exact)
+                    .border_style(Style::default().fg(if self.focused {
+                        Color::LightCyan
+                    } else {
+                        Color::White
+                    }))
+                    .title(Line::from(self.title.clone()).centered()),
+            ),
+            area,
         );
-        
+
         Ok(())
     }
 
@@ -81,3 +84,4 @@ impl Component for TextInput {
         self.focused = false
     }
 }
+

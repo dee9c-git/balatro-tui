@@ -9,6 +9,8 @@ use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::prelude::Color;
 use ratatui::style::Style;
+use ratatui::symbols;
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 use tokio::sync::mpsc;
@@ -63,7 +65,7 @@ impl QuickOptions {
             )],
         ]);
 
-        options.title = "Quick Options".to_string();
+        // options.title = "Quick Options".to_string();
 
         let (local_tx, local_rx) = tokio::sync::mpsc::unbounded_channel();
 
@@ -153,14 +155,10 @@ impl Component for QuickOptions {
                         .centered(),
                 ])
                 .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_type(BorderType::Rounded)
-                        .border_style(if self.has_focus {
-                            Style::default().fg(Color::LightCyan)
-                        } else {
-                            Style::default().fg(Color::White)
-                        }),
+                    Block::bordered()
+                        .border_type(BorderType::Thick)
+                        .border_style(Style::default().fg(Color::White))
+                        .merge_borders(MergeStrategy::Exact),
                 ),
                 area,
             );

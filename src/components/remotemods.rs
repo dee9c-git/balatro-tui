@@ -9,7 +9,7 @@ use ratatui::layout::Direction;
 use ratatui::style::Color;
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Layout, Rect, Spacing},
     style::Style,
 };
 use tokio::sync::mpsc;
@@ -218,6 +218,7 @@ impl Component for RemoteModsComponent {
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(3), Constraint::Min(0)])
+            .spacing(Spacing::Overlap(1))
             .split(area);
 
         // frame.render_widget(

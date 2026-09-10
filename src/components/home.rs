@@ -13,6 +13,8 @@ use balatro_tui::{
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
+use ratatui::layout::{Offset, Spacing};
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::{prelude::*, widgets::*};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
@@ -55,7 +57,7 @@ impl Home {
         ]);
 
         mode_selector.has_focus = true;
-        mode_selector.title = "Modes (Move with Tab/Shift+Tab)".to_string();
+        //mode_selector.title = "Modes (Move with Tab/Shift+Tab)".to_string();
 
         let authoring = AuthoringTools::new();
 
@@ -88,9 +90,6 @@ impl Home {
             } else {
                 self.mode_selector.selected = (self.mode_selector.selected + len - 1) % len;
             }
-        }
-        if self.mode_selector.selected > 5 {
-            self.mode_selector.scroll_offset = self.mode_selector.selected.saturating_sub(5);
         }
         self.focus_selected();
     }
@@ -251,18 +250,19 @@ impl Component for Home {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
-        let vertical_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3), Constraint::Min(0)])
-            .split(area);
+        let [log_chunk, content_chunk] = area.layout(
+            &Layout::vertical([Constraint::Length(3), Constraint::Min(0)])
+                .spacing(Spacing::Overlap(1)),
+        );
 
         frame.render_widget(
             TuiLoggerWidget::default()
                 .block(
-                    Block::default()
+                    Block::bordered()
                         .borders(Borders::ALL)
-                        .border_type(BorderType::Rounded)
-                        .title("Balatro TUI"),
+                        .border_type(BorderType::Thick)
+                        .merge_borders(MergeStrategy::Exact)
+                        .title(Line::from(" Balatro TUI ").centered()),
                 )
                 .output_level(None)
                 .style_info(Style::default().fg(Color::LightGreen))
@@ -273,31 +273,53 @@ impl Component for Home {
                 .output_target(false)
                 .output_timestamp(None)
                 .output_line(false),
-            vertical_chunks[0],
+            log_chunk,
         );
 
-        let horizontal_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(40), Constraint::Min(50)])
+        let titles: Vec<Line> = self
+            .mode_selector
+            .options
+            .iter()
+            .map(|opt| Line::from(opt[0].text.clone()))
+            .collect();
+
+        /*
+        let content_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(1), Constraint::Min(0)])
             .split(vertical_chunks[1]);
-        self.mode_selector.draw(frame, horizontal_chunks[0])?;
+        */
 
         match self.mode_selector.selected {
             0 => {
-                self.quick_ops.draw(frame, horizontal_chunks[1])?;
+                self.quick_ops.draw(frame, content_chunk)?;
             }
             1 => {
-                self.installed_mod_selector
-                    .draw(frame, horizontal_chunks[1])?;
+                self.installed_mod_selector.draw(frame, content_chunk)?;
             }
             2 => {
-                self.remote_mod_selector.draw(frame, horizontal_chunks[1])?;
+                self.remote_mod_selector.draw(frame, content_chunk)?;
             }
             3 => {
-                self.authoring.draw(frame, horizontal_chunks[1])?;
+                self.authoring.draw(frame, content_chunk)?;
             }
             _ => {}
         }
+
+        frame.render_widget(
+            Tabs::new(titles)
+                .select(self.mode_selector.selected)
+                .divider(symbols::DOT)
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD),
+                )
+                .padding("  ", "  "),
+            content_chunk
+                .offset(Offset { x: 1, y: 0 })
+                .centered_horizontally(Constraint::Ratio(2, 3)),
+        );
 
         Ok(())
     }
