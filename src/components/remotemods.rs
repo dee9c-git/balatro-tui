@@ -1,5 +1,5 @@
 use super::{Component, Eventable};
-use balatro_tui::{download_to_tmp, get_balatro_appdata_dir, unzip};
+use balatro_tui::{download_to_tmp, get_balatro_appdata_dir, install_dir, unzip};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::info;
@@ -77,25 +77,26 @@ impl RemoteModsComponent {
         self.build_options();
     }
     fn build_options(&mut self) {
-        self.displayed_mods.sort_by(|a, b| a.title.cmp(&b.title));
+        self.displayed_mods.sort_by(|a, b| a.name.cmp(&b.name));
 
         self.options.options.clear();
 
         self.displayed_mods.iter_mut().for_each(|m| {
             self.options.options.push(
                 vec![
-                    OptionSelectorText::new(m.title.clone(), Style::default()),
+                    OptionSelectorText::new(m.name.clone(), Style::default()),
+                    /*
                     OptionSelectorText::new(
                         format!(" {} ", m.version.clone()),
                         Style::default().fg(Color::LightBlue),
-                    ),
+                    ), */
                     OptionSelectorText::new(
-                        format!("by {}", m.author.clone()),
+                        format!(" by {}", m.owner.clone()),
                         Style::default().fg(Color::DarkGray),
                     ),
                     OptionSelectorText::new(
-                        format!(" (id: {})", m.identifier.clone()),
-                        Style::default().fg(Color::DarkGray),
+                        format!(" {}", m.description.clone()),
+                        Style::default().fg(Color::LightBlue),
                     ),
                 ], //                Span::styled(format!("{} {} by {:?}", m.name, m.version, m.author), Style::default().fg(Color::Green)),
             );
@@ -105,7 +106,7 @@ impl RemoteModsComponent {
         let names: Vec<String> = self
             .mods
             .iter()
-            .map(|m| m.title.clone().to_lowercase())
+            .map(|m| m.name.clone().to_lowercase())
             .collect();
         let all_mods: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
 
@@ -123,10 +124,7 @@ impl RemoteModsComponent {
             let mut filtered_mods: Vec<RemoteMod> = Vec::new();
             for (m, _) in res {
                 let mod_name = m.to_string();
-                let mod_opt = self
-                    .mods
-                    .iter()
-                    .find(|m| m.title.to_lowercase() == mod_name);
+                let mod_opt = self.mods.iter().find(|m| m.name.to_lowercase() == mod_name);
                 if mod_opt.is_some() {
                     filtered_mods.push(mod_opt.unwrap().clone());
                 }
@@ -189,7 +187,7 @@ impl Component for RemoteModsComponent {
                     tokio::spawn(async move {
                         info!(
                             "Now installing {} from {}",
-                            remote_mod.title, remote_mod.download_url
+                            remote_mod.name, remote_mod.download_url
                         );
 
                         let temp_file = download_to_tmp(&*remote_mod.download_url).await;
@@ -198,16 +196,13 @@ impl Component for RemoteModsComponent {
                         match unzip(
                             file,
                             &get_balatro_appdata_dir().join("Mods"),
-                            &remote_mod.folder_name,
+                            &install_dir(&remote_mod),
                         ) {
                             Ok(_) => info!(
                                 "Successfully installed {} {}",
-                                remote_mod.title, remote_mod.version
+                                remote_mod.name, remote_mod.version
                             ),
-                            Err(e) => log::error!(
-                                "Failed to install {}: {}",
-                                remote_mod.title, e
-                            ),
+                            Err(e) => log::error!("Failed to install {}: {}", remote_mod.name, e),
                         }
                     });
 

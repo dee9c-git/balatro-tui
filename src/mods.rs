@@ -115,20 +115,21 @@ pub fn is_same_mod(local: &Mod, remote: &RemoteMod) -> bool {
 
     let author_matches = local.author.iter().any(|a| {
         remote
-            .author
+            .owner
             .split([',', ';'])
             .map(str::trim)
             .any(|r| r.eq_ignore_ascii_case(a.trim()))
     });
 
-    let slug = remote.folder_name.rsplit('@').next().unwrap_or("");
+    let slug = remote.identifier.rsplit('@').next().unwrap_or("");
 
-    let folder_exact = folder_name == remote.folder_name;
+    let folder_exact = !remote.folder_name.is_empty() && folder_name == remote.folder_name;
     let name_author =
-        local.name.eq_ignore_ascii_case(&remote.title) && author_matches;
+        local.name.eq_ignore_ascii_case(&remote.name) && author_matches;
     let id_slug = normalize_ident(&local.id) == normalize_ident(slug);
+    let id_exact = !remote.id.is_empty() && normalize_ident(&local.id) == normalize_ident(&remote.id);
 
-    folder_exact || name_author || id_slug
+    folder_exact || name_author || id_slug || id_exact
 }
 
 #[derive(Default, Debug, Deserialize)]

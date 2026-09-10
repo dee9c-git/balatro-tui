@@ -12,7 +12,7 @@ use std::process::Stdio;
 use std::process::{Child, Command};
 use tempfile::NamedTempFile;
 
-const MOD_CATALOG_URL: &str = "https://bmi-smm.dee9c.com/catalog.json";
+const MOD_CATALOG_URL: &str = "https://media.githubusercontent.com/media/frostice482/balatro-mod-index-tiny/master/out.json.gz";
 
 pub fn catalog_cache_path() -> PathBuf {
     if let Some(proj_dirs) =
@@ -44,27 +44,62 @@ pub fn load_catalog() -> Vec<RemoteMod> {
 
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct RemoteMod {
-    pub title: String,
+    pub name: String,
     pub version: String,
-    pub author: String,
+    pub owner: String,
+    #[serde(default)]
     pub categories: Vec<String>,
     pub repo: String,
-    #[serde(rename = "downloadURL")]
     pub download_url: String,
-    #[serde(rename = "folderName")]
+    #[serde(rename = "folderName", default)]
     pub folder_name: String,
+    #[serde(rename = "pathname")]
     pub identifier: String,
+    pub id: String,
+    #[serde(default)]
+    pub description: String,
+}
+
+pub fn install_dir(remote: &RemoteMod) -> String {
+    if remote.folder_name.is_empty() {
+        remote.identifier.clone()
+    } else {
+        remote.folder_name.clone()
+    }
 }
 
 pub async fn fetch_catalog() -> Vec<RemoteMod> {
     match get(MOD_CATALOG_URL).await {
         Ok(resp) => {
-            if let Ok(catalog) = resp.json::<Vec<RemoteMod>>().await {
-                info!("Fetched {} mods from catalog", catalog.len());
-                catalog
-            } else {
-                error!("Failed to parse mod catalog");
-                vec![]
+            match resp.bytes().await {
+                Ok(bytes) => {
+                    let data: Vec<u8> = if bytes.len() >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b
+                    {
+                        let mut out = Vec::new();
+                        let mut decoder =
+                            flate2::read::GzDecoder::new(std::io::Cursor::new(&bytes[..]));
+                        match std::io::Read::read_to_end(&mut decoder, &mut out) {
+                            Ok(_) => out,
+                            Err(e) => {
+                                error!("Failed to decompress mod catalog: {}", e);
+                                return vec![];
+                            }
+                        }
+                    } else {
+                        bytes.to_vec()
+                    };
+                    if let Ok(catalog) = serde_json::from_slice::<Vec<RemoteMod>>(&data) {
+                        info!("Fetched {} mods from catalog", catalog.len());
+                        catalog
+                    } else {
+                        error!("Failed to parse mod catalog");
+                        vec![]
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to read mod catalog: {}", e);
+                    vec![]
+                }
             }
         }
         Err(e) => {
@@ -200,18 +235,16 @@ pub fn unzip(mut file: &File, base_path: &PathBuf, dir_name: &str) -> Result<(),
     Ok(())
 }
 
-pub async fn reinstall_mod(remote: &RemoteMod, disabled: bool) -> Result<(), String> {
+pub async fn reinstall_mod(remote: &RemoteMod, disabled: bool, dir: &str) -> Result<(), String> {
     let temp_file = download_to_tmp(&remote.download_url).await;
     let file = temp_file.as_file();
 
     let mods_dir = get_balatro_appdata_dir().join("Mods");
 
-    unzip(file, &mods_dir, &remote.folder_name)?;
+    unzip(file, &mods_dir, dir)?;
 
     if disabled {
-        let ignore = mods_dir
-            .join(&remote.folder_name)
-            .join(".lovelyignore");
+        let ignore = mods_dir.join(dir).join(".lovelyignore");
         fs::File::create(ignore)
             .map_err(|e| format!("failed to write .lovelyignore: {}", e))?;
     }

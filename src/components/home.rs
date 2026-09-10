@@ -7,7 +7,7 @@ use crate::components::quickoptions::QuickOptions;
 use crate::components::remotemods::RemoteModsComponent;
 use crate::config::Config;
 use crate::mods::{is_same_mod, ModList};
-use balatro_tui::{fetch_catalog, load_catalog, motd::motd, reinstall_mod, save_catalog, RemoteMod};
+use balatro_tui::{fetch_catalog, install_dir, load_catalog, motd::motd, reinstall_mod, save_catalog, RemoteMod};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
@@ -205,13 +205,32 @@ impl Component for Home {
                 } else {
                     tokio::spawn(async move {
                         let installed = ModList::get_local_mods();
+                        let mods_dir = ModList::get_local_mod_dir();
                         for m in &installed {
                             match catalog.iter().find(|r| is_same_mod(m, r)) {
                                 Some(remote) => {
-                                    info!("Reinstalling {}...", remote.title);
+                                    info!("Reinstalling {}...", remote.name);
                                     let disabled = m.folder.join(".lovelyignore").exists();
-                                    if let Err(e) = reinstall_mod(remote, disabled).await {
-                                        error!("Failed to reinstall {}: {}", remote.title, e);
+                                    let target = install_dir(remote);
+                                    let migrating = m.folder != mods_dir.join(&target);
+                                    match reinstall_mod(remote, disabled, &target).await {
+                                        Ok(_) => {
+                                            if migrating {
+                                                match std::fs::remove_dir_all(&m.folder) {
+                                                    Ok(_) => info!(
+                                                        "Migrated {} to {}",
+                                                        m.folder.display(), target
+                                                    ),
+                                                    Err(e) => error!(
+                                                        "Failed to remove old folder {}: {}",
+                                                        m.folder.display(), e
+                                                    ),
+                                                }
+                                            }
+                                        }
+                                        Err(e) => {
+                                            error!("Failed to reinstall {}: {}", remote.name, e)
+                                        }
                                     }
                                 }
                                 None => {
