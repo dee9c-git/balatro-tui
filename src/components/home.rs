@@ -6,8 +6,10 @@ use crate::components::optionselector::{OptionSelector, OptionSelectorText};
 use crate::components::quickoptions::QuickOptions;
 use crate::components::remotemods::RemoteModsComponent;
 use crate::config::Config;
-use crate::mods::{is_same_mod, ModList};
-use balatro_tui::{fetch_catalog, install_dir, load_catalog, motd::motd, reinstall_mod, save_catalog, RemoteMod};
+use crate::mods::{ModList, is_same_mod};
+use balatro_tui::{
+    RemoteMod, fetch_catalog, install_dir, load_catalog, motd::motd, reinstall_mod, save_catalog,
+};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
@@ -84,8 +86,7 @@ impl Home {
             if down {
                 self.mode_selector.selected = (self.mode_selector.selected + 1) % len;
             } else {
-                self.mode_selector.selected =
-                    (self.mode_selector.selected + len - 1) % len;
+                self.mode_selector.selected = (self.mode_selector.selected + len - 1) % len;
             }
         }
         if self.mode_selector.selected > 5 {
@@ -171,8 +172,7 @@ impl Component for Home {
                 if !self.catalog_fetched {
                     self.catalog_fetched = true;
                     self.catalog = load_catalog();
-                    self.remote_mod_selector
-                        .update_mods(self.catalog.clone());
+                    self.remote_mod_selector.update_mods(self.catalog.clone());
                     if let Some(tx) = self.command_tx.clone() {
                         tokio::spawn(async move {
                             info!("Rerolling for mods...");
@@ -182,11 +182,7 @@ impl Component for Home {
                             if !mods.is_empty() {
                                 save_catalog(&mods);
                             }
-                            info!(
-                                "Got {} mods in {:.2}s",
-                                mods.len(),
-                                elapsed.as_secs_f64()
-                            );
+                            info!("Got {} mods in {:.2}s", mods.len(), elapsed.as_secs_f64());
                             let _ = tx.send(Action::CatalogFetched(mods));
                             tokio::time::sleep(Duration::from_millis(1500)).await;
                             info!("{}", motd());
@@ -219,11 +215,13 @@ impl Component for Home {
                                                 match std::fs::remove_dir_all(&m.folder) {
                                                     Ok(_) => info!(
                                                         "Migrated {} to {}",
-                                                        m.folder.display(), target
+                                                        m.folder.display(),
+                                                        target
                                                     ),
                                                     Err(e) => error!(
                                                         "Failed to remove old folder {}: {}",
-                                                        m.folder.display(), e
+                                                        m.folder.display(),
+                                                        e
                                                     ),
                                                 }
                                             }
@@ -255,19 +253,26 @@ impl Component for Home {
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(5),
-                Constraint::Length(3),
-            ])
+            .constraints([Constraint::Length(3), Constraint::Min(0)])
             .split(area);
 
         frame.render_widget(
-            Paragraph::new("Balatro TUI").style(Style::default()).block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_type(BorderType::Rounded),
-            ),
+            TuiLoggerWidget::default()
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(BorderType::Rounded)
+                        .title("Balatro TUI"),
+                )
+                .output_level(None)
+                .style_info(Style::default().fg(Color::LightGreen))
+                .style_warn(Style::default().fg(Color::Yellow))
+                .style_error(Style::default().fg(Color::Red))
+                .style_debug(Style::default().fg(Color::Blue))
+                .output_file(false)
+                .output_target(false)
+                .output_timestamp(None)
+                .output_line(false),
             vertical_chunks[0],
         );
 
@@ -293,26 +298,6 @@ impl Component for Home {
             }
             _ => {}
         }
-
-        frame.render_widget(
-            TuiLoggerWidget::default()
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_type(BorderType::Rounded)
-                        .title("Logs"),
-                )
-                .output_level(None)
-                .style_info(Style::default().fg(Color::LightGreen))
-                .style_warn(Style::default().fg(Color::Yellow))
-                .style_error(Style::default().fg(Color::Red))
-                .style_debug(Style::default().fg(Color::Blue))
-                .output_file(false)
-                .output_target(false)
-                .output_timestamp(None)
-                .output_line(false),
-            vertical_chunks[2],
-        );
 
         Ok(())
     }
