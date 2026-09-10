@@ -7,10 +7,10 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::style::{Color, Modifier};
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::{Line, Text};
-use ratatui::widgets::{Block, BorderType, Borders};
+use ratatui::widgets::{Block, BorderType, Borders, Padding};
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Flex, Layout, Rect},
     style::{Style, Stylize},
     text::Span,
     widgets::Paragraph,
@@ -45,6 +45,7 @@ pub struct OptionSelector {
     pub has_focus: bool,
     pub action_tx: Option<UnboundedSender<Actions>>,
     pub scroll_offset: usize,
+    pub flex: Flex,
 }
 
 impl Clone for OptionSelector {
@@ -56,6 +57,7 @@ impl Clone for OptionSelector {
         s.app_action_tx = self.app_action_tx.clone();
         s.options = self.options.clone();
         s.scroll_offset = self.scroll_offset;
+        s.flex = self.flex;
 
         s
     }
@@ -71,6 +73,7 @@ impl OptionSelector {
             has_focus: false,
             action_tx: None,
             scroll_offset: 0,
+            flex: Flex::Start,
         }
     }
 }
@@ -151,22 +154,33 @@ impl Component for OptionSelector {
                 Line::from(lines)
             })
             .collect();
-        let content = Paragraph::new(ops)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_type(BorderType::Thick)
-                    .merge_borders(MergeStrategy::Exact)
-                    .title(Line::from(self.title.as_str()).centered())
-.border_style(if self.has_focus {
-                                    Style::default().fg(Color::White)
-                                } else {
-                                    Style::default().fg(Color::White)
-                                }),
-            )
-            .scroll((self.scroll_offset as u16, 0));
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Thick)
+            .padding(Padding::new(4, 4, 0, 0))
+            .merge_borders(MergeStrategy::Exact)
+            .title(Line::from(self.title.as_str()).centered())
+            .border_style(Style::default().fg(Color::White));
 
-        frame.render_widget(content, area);
+        if self.flex == Flex::Start {
+            let content = Paragraph::new(ops)
+                .block(block)
+                .scroll((self.scroll_offset as u16, 0));
+            frame.render_widget(content, area);
+        } else {
+            let inner = block.inner(area);
+            frame.render_widget(block, area);
+            let rows = Layout::vertical(vec![Constraint::Length(1); ops.len()])
+                .flex(self.flex)
+                .split(inner);
+            for (i, row) in rows.iter().enumerate() {
+                let idx = self.scroll_offset + i;
+                if idx >= ops.len() {
+                    break;
+                }
+                frame.render_widget(ops[idx].clone(), *row);
+            }
+        }
 
         Ok(())
     }

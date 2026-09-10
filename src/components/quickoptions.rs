@@ -9,7 +9,6 @@ use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::prelude::Color;
 use ratatui::style::Style;
-use ratatui::symbols;
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
@@ -44,15 +43,15 @@ impl QuickOptions {
                 Style::default(),
             )],
             vec![OptionSelectorText::new(
-                "Open Balatro data folder".to_string(),
+                "Open Balatro Data Folder".to_string(),
                 Style::default(),
             )],
             vec![OptionSelectorText::new(
-                "Open Balatro mods folder".to_string(),
+                "Open Balatro Mods Folder".to_string(),
                 Style::default(),
             )],
             vec![OptionSelectorText::new(
-                "Open Balatro-tui data folder".to_string(),
+                "Open Balatro-tui Data Folder".to_string(),
                 Style::default(),
             )],
             vec![OptionSelectorText::new(
@@ -64,6 +63,8 @@ impl QuickOptions {
                 Style::default(),
             )],
         ]);
+
+        options.flex = ratatui::layout::Flex::Center;
 
         // options.title = "Quick Options".to_string();
 

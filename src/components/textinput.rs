@@ -6,7 +6,7 @@ use ratatui::layout::{Rect, Size};
 use ratatui::style::{Color, Style};
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
-use ratatui::widgets::{Block, BorderType, Paragraph};
+use ratatui::widgets::{Block, BorderType, Padding, Paragraph};
 
 #[derive(Default)]
 pub struct TextInput {
@@ -63,6 +63,7 @@ impl Component for TextInput {
                 Block::bordered()
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
+                    .padding(Padding::new(4, 4, 0, 0))
                     .border_style(Style::default().fg(if self.focused {
                         Color::White
                     } else {
@@ -84,4 +85,3 @@ impl Component for TextInput {
         self.focused = false
     }
 }
-

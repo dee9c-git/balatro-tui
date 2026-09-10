@@ -119,7 +119,10 @@ impl Component for AuthoringTools {
                         } else {
                             Style::default().fg(Color::White)
                         })
-                        .title(Line::from(format!("Editing mod at {}", self.mod_path.display())).centered()),
+                        .title(
+                            Line::from(format!("Editing mod at {}", self.mod_path.display()))
+                                .centered(),
+                        ),
                 ),
                 chunks[0],
             );

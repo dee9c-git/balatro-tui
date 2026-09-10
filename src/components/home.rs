@@ -251,7 +251,7 @@ impl Component for Home {
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let [log_chunk, content_chunk] = area.layout(
-            &Layout::vertical([Constraint::Length(3), Constraint::Min(0)])
+            &Layout::vertical([Constraint::Length(5), Constraint::Min(0)])
                 .spacing(Spacing::Overlap(1)),
         );
 
@@ -262,6 +262,7 @@ impl Component for Home {
                         .borders(Borders::ALL)
                         .border_type(BorderType::Thick)
                         .merge_borders(MergeStrategy::Exact)
+                        .padding(Padding::new(4, 4, 1, 1))
                         .title(
                             Line::from(" BALATUI ")
                                 .centered()
