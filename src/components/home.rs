@@ -1,6 +1,5 @@
 use super::Component;
 use crate::action::Action;
-use crate::components::authoring::AuthoringTools;
 use crate::components::modlist::ModlistComponent;
 use crate::components::optionselector::{OptionSelector, OptionSelectorText};
 use crate::components::quickoptions::QuickOptions;
@@ -27,7 +26,6 @@ pub struct Home {
     installed_mod_selector: ModlistComponent,
     remote_mod_selector: RemoteModsComponent,
     mode_selector: OptionSelector,
-    authoring: AuthoringTools,
     has_focus: bool,
     catalog_fetched: bool,
     catalog: Vec<RemoteMod>,
@@ -50,16 +48,10 @@ impl Home {
                 "Find New Mods".to_string(),
                 Style::default(),
             )],
-            vec![OptionSelectorText::new(
-                "Mod Authoring Tools".to_string(),
-                Style::default(),
-            )],
         ]);
 
         mode_selector.has_focus = true;
         //mode_selector.title = "Modes (Move with Tab/Shift+Tab)".to_string();
-
-        let authoring = AuthoringTools::new();
 
         let quick_ops = QuickOptions::new();
 
@@ -69,7 +61,6 @@ impl Home {
             installed_mod_selector,
             remote_mod_selector,
             mode_selector,
-            authoring,
             quick_ops,
             command_tx: None,
             config: Config::default(),
@@ -99,7 +90,6 @@ impl Home {
             0 => self.quick_ops.focus(),
             1 => self.installed_mod_selector.focus(),
             2 => self.remote_mod_selector.focus(),
-            3 => self.authoring.focus(),
             _ => {}
         }
     }
@@ -109,7 +99,6 @@ impl Home {
             0 => self.quick_ops.unfocus(),
             1 => self.installed_mod_selector.unfocus(),
             2 => self.remote_mod_selector.unfocus(),
-            3 => self.authoring.unfocus(),
             _ => {}
         }
     }
@@ -155,9 +144,6 @@ impl Component for Home {
                 }
                 2 => {
                     let _ = self.remote_mod_selector.handle_key_event(key);
-                }
-                3 => {
-                    let _ = self.authoring.handle_key_event(key);
                 }
                 _ => {}
             },
@@ -307,9 +293,6 @@ impl Component for Home {
             2 => {
                 self.remote_mod_selector.draw(frame, content_chunk)?;
             }
-            3 => {
-                self.authoring.draw(frame, content_chunk)?;
-            }
             _ => {}
         }
 
@@ -325,7 +308,7 @@ impl Component for Home {
                 .padding("  ", "  "),
             content_chunk
                 .offset(Offset { x: 1, y: 0 })
-                .centered_horizontally(Constraint::Ratio(2, 3)),
+                .centered_horizontally(Constraint::Ratio(1, 2)),
         );
 
         Ok(())

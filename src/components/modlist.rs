@@ -9,7 +9,7 @@ use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Flex, Layout, Rect},
     style::{Style, Stylize},
     text::Span,
     widgets::Paragraph,
@@ -36,6 +36,7 @@ impl ModlistComponent {
     pub fn new() -> Self {
         let mut installed_mod_selector = OptionSelector::new(vec![]);
         installed_mod_selector.title = "Installed mods".to_string();
+        installed_mod_selector.flex = Flex::Center;
 
         let mods_ref = Vec::new();
 

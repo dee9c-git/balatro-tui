@@ -170,15 +170,27 @@ impl Component for OptionSelector {
         } else {
             let inner = block.inner(area);
             frame.render_widget(block, area);
-            let rows = Layout::vertical(vec![Constraint::Length(1); ops.len()])
+            let [_, items_area] =
+                Layout::horizontal([Constraint::Ratio(1, 4), Constraint::Min(0)]).areas(inner);
+            let spaced = self.flex == Flex::SpaceBetween;
+            let item_rows: Vec<Line> = ops
+                .iter()
+                .flat_map(|l| [l.clone(), Line::from("")])
+                .collect();
+            let rows = Layout::vertical(vec![Constraint::Length(1); item_rows.len()])
                 .flex(self.flex)
-                .split(inner);
+                .split(items_area);
             for (i, row) in rows.iter().enumerate() {
                 let idx = self.scroll_offset + i;
-                if idx >= ops.len() {
+                if idx >= item_rows.len() {
                     break;
                 }
-                frame.render_widget(ops[idx].clone(), *row);
+                let item = if spaced {
+                    item_rows[idx].clone().centered()
+                } else {
+                    item_rows[idx].clone()
+                };
+                frame.render_widget(item, *row);
             }
         }
 
