@@ -3,7 +3,7 @@ use cli::Cli;
 use color_eyre::Result;
 use log::info;
 use crate::app::App;
-use balatro_tui::motd::motd;
+use balatui::motd::motd;
 
 mod action;
 mod app;

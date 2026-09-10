@@ -1,5 +1,5 @@
 [package]
-name = "balatro-tui"
+name = "balatui"
 version = "0.1.0"
 edition = "2024"
 description = "A balatro mod manager and helper."

@@ -64,7 +64,7 @@ impl Component for TextInput {
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
                     .border_style(Style::default().fg(if self.focused {
-                        Color::LightCyan
+                        Color::White
                     } else {
                         Color::White
                     }))

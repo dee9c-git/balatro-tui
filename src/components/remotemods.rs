@@ -1,5 +1,5 @@
 use super::{Component, Eventable};
-use balatro_tui::{download_to_tmp, get_balatro_appdata_dir, install_dir, unzip};
+use balatui::{download_to_tmp, get_balatro_appdata_dir, install_dir, unzip};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::info;
@@ -18,7 +18,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::action::Action;
 use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
 use crate::components::textinput::TextInput;
-use balatro_tui::RemoteMod;
+use balatui::RemoteMod;
 
 #[derive(Default)]
 enum State {

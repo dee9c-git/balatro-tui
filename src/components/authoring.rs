@@ -85,7 +85,7 @@ impl Component for AuthoringTools {
                             .merge_borders(MergeStrategy::Exact)
                             .border_style(
                                 if self.has_focus {
-                                    Style::default().fg(Color::LightCyan)
+                                    Style::default().fg(Color::White)
                                 } else {
                                     Style::default().fg(Color::White)
                                 }
@@ -115,7 +115,7 @@ impl Component for AuthoringTools {
                         .border_type(BorderType::Thick)
                         .merge_borders(MergeStrategy::Exact)
                         .border_style(if self.has_focus {
-                            Style::default().fg(Color::LightCyan)
+                            Style::default().fg(Color::White)
                         } else {
                             Style::default().fg(Color::White)
                         })

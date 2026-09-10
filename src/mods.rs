@@ -1,4 +1,4 @@
-use balatro_tui::{get_balatro_appdata_dir, RemoteMod};
+use balatui::{get_balatro_appdata_dir, RemoteMod};
 use log::error;
 use serde::Deserialize;
 use std::fs::File;

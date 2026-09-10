@@ -158,11 +158,11 @@ impl Component for OptionSelector {
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
                     .title(Line::from(self.title.as_str()).centered())
-                    .border_style(if self.has_focus {
-                        Style::default().fg(Color::LightCyan)
-                    } else {
-                        Style::default().fg(Color::White)
-                    }),
+.border_style(if self.has_focus {
+                                    Style::default().fg(Color::White)
+                                } else {
+                                    Style::default().fg(Color::White)
+                                }),
             )
             .scroll((self.scroll_offset as u16, 0));
 

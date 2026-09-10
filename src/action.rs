@@ -1,4 +1,4 @@
-use balatro_tui::RemoteMod;
+use balatui::RemoteMod;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 

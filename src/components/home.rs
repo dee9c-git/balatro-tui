@@ -7,7 +7,7 @@ use crate::components::quickoptions::QuickOptions;
 use crate::components::remotemods::RemoteModsComponent;
 use crate::config::Config;
 use crate::mods::{ModList, is_same_mod};
-use balatro_tui::{
+use balatui::{
     RemoteMod, fetch_catalog, install_dir, load_catalog, motd::motd, reinstall_mod, save_catalog,
 };
 use color_eyre::Result;
@@ -262,7 +262,13 @@ impl Component for Home {
                         .borders(Borders::ALL)
                         .border_type(BorderType::Thick)
                         .merge_borders(MergeStrategy::Exact)
-                        .title(Line::from(" Balatro TUI ").centered()),
+                        .title(
+                            Line::from(" BALATUI ")
+                                .centered()
+                                .bold()
+                                .bg(Color::White)
+                                .fg(Color::Black),
+                        ),
                 )
                 .output_level(None)
                 .style_info(Style::default().fg(Color::LightGreen))
@@ -309,7 +315,7 @@ impl Component for Home {
         frame.render_widget(
             Tabs::new(titles)
                 .select(self.mode_selector.selected)
-                .divider(symbols::DOT)
+                .divider("/")
                 .highlight_style(
                     Style::default()
                         .fg(Color::Green)
