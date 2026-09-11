@@ -65,8 +65,6 @@ impl QuickOptions {
 
         options.flex = ratatui::layout::Flex::Center;
 
-        // options.title = "Quick Options".to_string();
-
         let (local_tx, local_rx) = tokio::sync::mpsc::unbounded_channel();
 
         Self {

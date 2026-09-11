@@ -13,7 +13,7 @@ use balatui::{
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
-use ratatui::layout::{Flex, Spacing};
+use ratatui::layout::{Flex, Offset, Spacing};
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::{prelude::*, widgets::*};
 use std::time::{Duration, Instant};
@@ -251,39 +251,8 @@ impl Component for Home {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
-        let [log_chunk, content_chunk] = area.layout(
-            &Layout::vertical([Constraint::Length(5), Constraint::Min(0)])
-                .spacing(Spacing::Overlap(1)),
-        );
-
-        frame.render_widget(
-            TuiLoggerWidget::default()
-                .block(
-                    Block::bordered()
-                        .borders(Borders::ALL)
-                        .border_type(BorderType::Thick)
-                        .merge_borders(MergeStrategy::Exact)
-                        .padding(Padding::new(4, 4, 1, 1))
-                        .title(
-                            Line::from(" BALATUI ")
-                                .centered()
-                                .bold()
-                                .bg(Color::White)
-                                .fg(Color::Black),
-                        ),
-                )
-                .output_level(None)
-                .style_info(Style::default().fg(Color::LightGreen))
-                .style_warn(Style::default().fg(Color::Yellow))
-                .style_error(Style::default().fg(Color::Red))
-                .style_debug(Style::default().fg(Color::Blue))
-                .output_file(false)
-                .output_target(false)
-                .output_timestamp(None)
-                .output_line(false),
-            log_chunk,
-        );
-
+        let [main, bottom_line] =
+            Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(area);
         let titles: Vec<Line> = self
             .mode_selector
             .options
@@ -300,22 +269,35 @@ impl Component for Home {
 
         match self.mode_selector.selected {
             0 => {
-                self.quick_ops.draw(frame, content_chunk)?;
+                self.quick_ops.draw(frame, main)?;
             }
             1 => {
-                self.installed_mod_selector.draw(frame, content_chunk)?;
+                self.installed_mod_selector.draw(frame, main)?;
             }
             2 => {
-                self.remote_mod_selector.draw(frame, content_chunk)?;
+                self.remote_mod_selector.draw(frame, main)?;
             }
             3 => {
-                self.about.draw(frame, content_chunk)?;
+                self.about.draw(frame, main)?;
             }
             _ => {}
         }
-        let [title_chunk] = Layout::horizontal([Constraint::Length(64)])
-            .flex(Flex::Center)
-            .areas(content_chunk);
+        let [_, title, options, _] = Layout::horizontal([
+            Constraint::Length(3),
+            Constraint::Min(0),
+            Constraint::Length(64),
+            Constraint::Length(3),
+        ])
+        .areas(main);
+        frame.render_widget(
+            Block::default().title(
+                Line::from(" BALATUI ")
+                    .bold()
+                    .bg(Color::White)
+                    .fg(Color::Black),
+            ),
+            title,
+        );
 
         frame.render_widget(
             Tabs::new(titles)
@@ -327,9 +309,32 @@ impl Component for Home {
                         .add_modifier(Modifier::BOLD),
                 )
                 .padding("  ", "  "),
-            title_chunk,
-            //content_chunk.centered_horizontally(Constraint::Ratio(2, 3)),
+            options,
         );
+
+        frame.render_widget(
+            TuiLoggerWidget::default()
+                .block(
+                    Block::default()
+                        .padding(Padding::new(3, 3, 0, 0))
+                        /*
+                                             .borders(Borders::ALL)
+                                             .border_type(BorderType::Thick)
+                                             .merge_borders(MergeStrategy::Exact), //.padding(Padding::new(4, 4, 1, 1))
+                                                                                   */
+                )
+                .output_level(None)
+                .style_info(Style::default().fg(Color::LightGreen))
+                .style_warn(Style::default().fg(Color::Yellow))
+                .style_error(Style::default().fg(Color::Red))
+                .style_debug(Style::default().fg(Color::Blue))
+                .output_file(false)
+                .output_target(false)
+                .output_timestamp(None)
+                .output_line(false),
+            bottom_line,
+        );
+        frame.render_widget(Block::default().title(Line::from(">>")), bottom_line);
 
         Ok(())
     }

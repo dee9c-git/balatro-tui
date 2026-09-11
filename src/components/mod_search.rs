@@ -64,11 +64,7 @@ impl Component for TextInput {
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
                     .padding(Padding::new(4, 4, 0, 0))
-                    .border_style(Style::default().fg(if self.focused {
-                        Color::White
-                    } else {
-                        Color::White
-                    }))
+                    .border_style(Style::default().fg(Color::White))
                     .title(Line::from(self.title.clone()).centered()),
             ),
             area,
