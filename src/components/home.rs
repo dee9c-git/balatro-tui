@@ -1,9 +1,9 @@
 use super::Component;
 use crate::action::Action;
-use crate::components::modlist::ModlistComponent;
-use crate::components::optionselector::{OptionSelector, OptionSelectorText};
-use crate::components::quickoptions::QuickOptions;
-use crate::components::remotemods::RemoteModsComponent;
+use crate::components::mod_list::ModlistComponent;
+use crate::components::option_selector::{OptionSelector, OptionSelectorText};
+use crate::components::quick_options::QuickOptions;
+use crate::components::remote_mods::RemoteModsComponent;
 use crate::config::Config;
 use crate::mods::{ModList, is_same_mod};
 use balatui::{

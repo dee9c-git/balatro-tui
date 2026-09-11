@@ -13,7 +13,7 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::action::Action;
-use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
+use crate::components::option_selector::{Actions, OptionSelector, OptionSelectorText};
 use crate::mods::{Mod, ModList};
 
 pub struct ModlistComponent {

@@ -1,5 +1,5 @@
 use crate::action::Action;
-use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
+use crate::components::option_selector::{Actions, OptionSelector, OptionSelectorText};
 use crate::components::{Component, Eventable};
 use crate::config::get_data_dir;
 use balatui::{get_balatro_appdata_dir, get_balatro_dir, install_lovely, launch_balatro, open};

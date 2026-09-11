@@ -6,16 +6,16 @@ use ratatui::{
 };
 use tokio::sync::mpsc::UnboundedSender;
 
+use crate::components::option_selector::Actions;
 use crate::{action::Action, config::Config, tui::Event};
-use crate::components::optionselector::Actions;
 
-pub mod home;
-mod optionselector;
 mod authoring;
-mod quickoptions;
-mod modlist;
-mod remotemods;
-mod textinput;
+pub mod home;
+mod mod_list;
+mod mod_search;
+mod option_selector;
+mod quick_options;
+mod remote_mods;
 
 /// `Component` is a trait that represents a visual and interactive element of the user interface.
 ///
@@ -128,9 +128,9 @@ pub trait Component {
     ///
     /// * `Result<()>` - An Ok result or an error.
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()>;
-    
+
     fn focus(&mut self);
-    
+
     fn unfocus(&mut self);
 }
 

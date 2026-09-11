@@ -16,8 +16,8 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::action::Action;
-use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
-use crate::components::textinput::TextInput;
+use crate::components::mod_search::TextInput;
+use crate::components::option_selector::{Actions, OptionSelector, OptionSelectorText};
 use balatui::RemoteMod;
 
 #[derive(Default)]
@@ -57,7 +57,7 @@ impl RemoteModsComponent {
         searchbar.placeholder = "Search...".to_string();
         searchbar.title = "Search".to_string();
 
-        let this = Self {
+        Self {
             action_tx: None,
             has_focus: false,
             options: installed_mod_selector,
@@ -67,9 +67,7 @@ impl RemoteModsComponent {
             local_action_rx: modlist_rx,
             local_action_tx: modlist_tx,
             state: State::Normal,
-        };
-
-        this
+        }
     }
     pub fn update_mods(&mut self, mods: Vec<RemoteMod>) {
         self.mods = mods;
