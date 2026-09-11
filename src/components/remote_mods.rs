@@ -174,6 +174,7 @@ impl Component for RemoteModsComponent {
                             Actions::Selected(c) => {
                                 info!("Selected {}", self.displayed_mods[c].identifier.clone());
                             }
+                            Actions::Delete(_) => {}
                             Actions::Reload => todo!(),
                         }
                     }

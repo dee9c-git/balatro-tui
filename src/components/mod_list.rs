@@ -93,6 +93,9 @@ impl ModlistComponent {
         self.mods.sort_by(|a, b| a.name.cmp(&b.name));
 
         self.options.options.clear();
+        if self.options.selected >= self.mods.len() {
+            self.options.selected = self.mods.len().saturating_sub(1);
+        }
 
         self.mods.iter_mut().for_each(|m| {
             self.options.options.push(
@@ -150,6 +153,28 @@ impl Component for ModlistComponent {
                             let m = &mut self.mods[c];
                             m.toggle_enabled();
                             self.build_options();
+                        }
+                        Actions::Delete(c) => {
+                            let m = &self.mods[c];
+                            if m.force_enable {
+                                log::error!("This mod is marked as force enabled and cannot be deleted!");
+                            } else {
+                                match std::fs::remove_dir_all(&m.folder) {
+                                    Ok(_) => {
+                                        log::info!("Deleted {} at {}", m.name, m.folder.display());
+                                        self.mods = ModList::get_local_mods();
+                                        self.build_options();
+                                    }
+                                    Err(e) => {
+                                        log::error!(
+                                            "Failed to delete {} at {}: {}",
+                                            m.name,
+                                            m.folder.display(),
+                                            e
+                                        );
+                                    }
+                                }
+                            }
                         }
                         Actions::Reload => {
                             self.mods = ModList::get_local_mods();

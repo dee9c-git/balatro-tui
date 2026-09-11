@@ -130,6 +130,7 @@ impl Component for QuickOptions {
                             }
                             _ => {}
                         },
+                        Actions::Delete(_) => {}
                         Actions::Reload => todo!(),
                     }
                 }

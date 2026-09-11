@@ -106,6 +106,10 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
+        if key.code == crossterm::event::KeyCode::Esc {
+            self.action_tx.send(Action::Quit)?;
+            return Ok(());
+        }
         let action_tx = self.action_tx.clone();
         let Some(keymap) = self.config.keybindings.get(&self.mode) else {
             return Ok(());

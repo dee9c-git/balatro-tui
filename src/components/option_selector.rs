@@ -1,6 +1,6 @@
 use super::{Component, Eventable};
 use color_eyre::Result;
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Modifier};
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
@@ -18,6 +18,7 @@ use crate::action::Action;
 
 pub enum Actions {
     Selected(usize),
+    Delete(usize),
     Reload,
 }
 
@@ -103,6 +104,13 @@ impl Component for OptionSelector {
             KeyCode::Enter => {
                 if let Some(tx) = self.action_tx.as_ref() {
                     tx.send(Actions::Selected(self.selected))?;
+                }
+            }
+            KeyCode::Char(c)
+                if (c == 'd' || c == 'D') && key.modifiers.contains(KeyModifiers::SHIFT) =>
+            {
+                if let Some(tx) = self.action_tx.as_ref() {
+                    tx.send(Actions::Delete(self.selected))?;
                 }
             }
             _ => {}

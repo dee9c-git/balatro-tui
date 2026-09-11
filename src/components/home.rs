@@ -139,6 +139,9 @@ impl Component for Home {
     }
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
+        if key.code == KeyCode::Esc {
+            return Ok(None);
+        }
         match key.code {
             KeyCode::Tab => {
                 self.select_mode(true);
@@ -340,34 +343,34 @@ impl Component for Home {
 
         match self.mode_selector.selected {
             0 => {
-                keys.push("[Up/Down -> Switch Option]".to_string());
-                keys.push("[Enter -> Select Option]".to_string());
-                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
-                keys.push("[Ctrl+C -> Exit]".to_string());
+                keys.push("[Up/Down: Switch Option]".to_string());
+                keys.push("[Enter: Select Option]".to_string());
+                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Esc: Exit]".to_string());
             }
             1 => {
-                keys.push("[Up/Down -> Select Mod]".to_string());
-                keys.push("[Shift+D -> Delete Mod]".to_string());
-                keys.push("[Enter -> Select Option]".to_string());
-                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
-                keys.push("[Ctrl+C -> Exit]".to_string());
+                keys.push("[Up/Down: Select Mod]".to_string());
+                keys.push("[Shift+D: Delete Mod]".to_string());
+                keys.push("[Enter: Select Option]".to_string());
+                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Esc: Exit]".to_string());
             }
             2 => {
-                keys.push("[Enter -> Install Mod]".to_string());
-                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
-                keys.push("[Ctrl+C -> Exit]".to_string());
+                keys.push("[Enter: Install Mod]".to_string());
+                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Esc: Exit]".to_string());
             }
             3 => {
-                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
-                keys.push("[Ctrl+C -> Exit]".to_string());
+                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Esc: Exit]".to_string());
             }
             _ => {}
         }
         frame.render_widget(
             Paragraph::new(Text::from(keys.join(" ")))
-                .block(Block::default().border_style(Style::default().fg(Color::Gray)))
-                .alignment(Alignment::Right),
-            bottom_line,
+                .block(Block::default().style(Style::default().fg(Color::White)))
+                .alignment(Alignment::Center),
+            bottom_line.offset(Offset { x: 0, y: -1 }),
         );
         Ok(())
     }
