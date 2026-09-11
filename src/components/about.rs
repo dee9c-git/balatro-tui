@@ -5,8 +5,8 @@ use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
-use ratatui::text::Line;
 use ratatui::symbols::merge::MergeStrategy;
+use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Padding, Paragraph};
 
 pub struct About {
@@ -37,8 +37,7 @@ impl Component for About {
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
                     .padding(Padding::new(4, 4, 0, 0))
-                    .border_style(Style::default().fg(Color::White))
-                    .title(Line::from("About").centered()),
+                    .border_style(Style::default().fg(Color::White)),
             ),
             area,
         );
@@ -54,3 +53,4 @@ impl Component for About {
         self.has_focus = false;
     }
 }
+

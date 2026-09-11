@@ -156,7 +156,6 @@ impl Component for OptionSelector {
             .border_type(BorderType::Thick)
             .padding(Padding::new(4, 4, 0, 0))
             .merge_borders(MergeStrategy::Exact)
-            .title(Line::from(self.title.as_str()).centered())
             .border_style(Style::default().fg(Color::White));
 
         if self.flex == Flex::Start {

@@ -336,6 +336,39 @@ impl Component for Home {
         );
         frame.render_widget(Block::default().title(Line::from(">>")), bottom_line);
 
+        let mut keys: Vec<String> = vec![];
+
+        match self.mode_selector.selected {
+            0 => {
+                keys.push("[Up/Down -> Switch Option]".to_string());
+                keys.push("[Enter -> Select Option]".to_string());
+                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
+                keys.push("[Ctrl+C -> Exit]".to_string());
+            }
+            1 => {
+                keys.push("[Up/Down -> Select Mod]".to_string());
+                keys.push("[Shift+D -> Delete Mod]".to_string());
+                keys.push("[Enter -> Select Option]".to_string());
+                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
+                keys.push("[Ctrl+C -> Exit]".to_string());
+            }
+            2 => {
+                keys.push("[Enter -> Install Mod]".to_string());
+                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
+                keys.push("[Ctrl+C -> Exit]".to_string());
+            }
+            3 => {
+                keys.push("[Tab/Shift+Tab -> Switch Tabs]".to_string());
+                keys.push("[Ctrl+C -> Exit]".to_string());
+            }
+            _ => {}
+        }
+        frame.render_widget(
+            Paragraph::new(Text::from(keys.join(" ")))
+                .block(Block::default().border_style(Style::default().fg(Color::Gray)))
+                .alignment(Alignment::Right),
+            bottom_line,
+        );
         Ok(())
     }
 }

@@ -42,7 +42,6 @@ pub struct RemoteModsComponent {
 impl RemoteModsComponent {
     pub fn new() -> Self {
         let mut installed_mod_selector = OptionSelector::new(vec![]);
-        installed_mod_selector.title = "Remote mods".to_string();
 
         let mods_ref = Vec::new();
 
@@ -55,7 +54,6 @@ impl RemoteModsComponent {
         let mut searchbar = TextInput::new();
 
         searchbar.placeholder = "Search...".to_string();
-        searchbar.title = "Search".to_string();
 
         Self {
             action_tx: None,
