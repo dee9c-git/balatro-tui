@@ -1,26 +1,19 @@
 use super::{Component, Eventable};
 use color_eyre::Result;
-use crossterm::event::{KeyCode, KeyEvent};
-use log::info;
+use crossterm::event::KeyEvent;
 use notify::recommended_watcher;
 use notify::{Event, RecursiveMode, Watcher};
 use ratatui::style::Color;
-use ratatui::text::{Line, Text};
-use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,
-    layout::{Constraint, Flex, Layout, Rect},
+    layout::{Flex, Rect},
     style::{Style, Stylize},
-    text::Span,
-    widgets::Paragraph,
 };
-use std::path::Path;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::action::Action;
 use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorText};
-use crate::mods;
 use crate::mods::{Mod, ModList};
 
 pub struct ModlistComponent {

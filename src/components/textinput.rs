@@ -2,7 +2,7 @@ use crate::action::Action;
 use crate::components::Component;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::Frame;
-use ratatui::layout::{Rect, Size};
+use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;

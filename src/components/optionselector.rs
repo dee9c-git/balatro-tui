@@ -1,17 +1,14 @@
-use std::ops::Add;
-use std::time::Instant;
-
 use super::{Component, Eventable};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::style::{Color, Modifier};
 use ratatui::symbols::merge::MergeStrategy;
-use ratatui::text::{Line, Text};
+use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Borders, Padding};
 use ratatui::{
     Frame,
     layout::{Constraint, Flex, Layout, Rect},
-    style::{Style, Stylize},
+    style::Style,
     text::Span,
     widgets::Paragraph,
 };
@@ -143,7 +140,7 @@ impl Component for OptionSelector {
                     lines.push(Span::styled(s.text, s.style));
                 }
 
-                if lines.len() >= 1 && op_i == self.selected + 1 {
+                if !lines.is_empty() && op_i == self.selected + 1 {
                     lines[0] = lines[0].clone().style(
                         Style::default()
                             .fg(Color::Green)

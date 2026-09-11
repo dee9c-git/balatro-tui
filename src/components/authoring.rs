@@ -4,9 +4,9 @@ use super::Component;
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Direction;
-use ratatui::style::{Color, Modifier};
+use ratatui::style::Color;
 use ratatui::symbols::merge::MergeStrategy;
-use ratatui::text::{Line, Text};
+use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,

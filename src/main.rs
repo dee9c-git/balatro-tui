@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
 
     // Set default level for unknown targets to Info
     tui_logger::set_default_level(log::LevelFilter::Info);
-    let config = config::Config::new()?;
+    let _config = config::Config::new()?;
 
     info!("{}", motd());
 

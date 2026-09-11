@@ -3,7 +3,6 @@ use crate::components::optionselector::{Actions, OptionSelector, OptionSelectorT
 use crate::components::{Component, Eventable};
 use crate::config::get_data_dir;
 use balatui::{get_balatro_appdata_dir, get_balatro_dir, install_lovely, launch_balatro, open};
-use color_eyre::Result;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::layout::Rect;
@@ -11,7 +10,7 @@ use ratatui::prelude::Color;
 use ratatui::style::Style;
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
-use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
+use ratatui::widgets::{Block, BorderType, Paragraph};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 

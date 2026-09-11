@@ -108,11 +108,11 @@ impl RemoteModsComponent {
             .iter()
             .map(|m| m.name.clone().to_lowercase())
             .collect();
-        let all_mods: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
+        let _all_mods: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
 
         let mut matcher = Matcher::new(Config::DEFAULT.match_paths());
 
-        let threshold = 0.4f32;
+        let _threshold = 0.4f32;
         if query.is_empty() {
             self.displayed_mods = self.mods.clone();
         } else {
@@ -146,7 +146,7 @@ impl Component for RemoteModsComponent {
     }
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
         match key.code {
-            KeyCode::Char(c) => {
+            KeyCode::Char(_c) => {
                 self.searchbar.handle_key_event(key)?;
                 self.search(self.searchbar.text.clone());
                 self.options.selected = 0;
