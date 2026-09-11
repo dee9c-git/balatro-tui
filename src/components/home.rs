@@ -1,5 +1,6 @@
 use super::Component;
 use crate::action::Action;
+use crate::components::about::About;
 use crate::components::mod_list::ModlistComponent;
 use crate::components::option_selector::{OptionSelector, OptionSelectorText};
 use crate::components::quick_options::QuickOptions;
@@ -12,7 +13,7 @@ use balatui::{
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
-use ratatui::layout::{Offset, Spacing};
+use ratatui::layout::{Flex, Spacing};
 use ratatui::symbols::merge::MergeStrategy;
 use ratatui::{prelude::*, widgets::*};
 use std::time::{Duration, Instant};
@@ -25,6 +26,7 @@ pub struct Home {
     quick_ops: QuickOptions,
     installed_mod_selector: ModlistComponent,
     remote_mod_selector: RemoteModsComponent,
+    about: About,
     mode_selector: OptionSelector,
     has_focus: bool,
     catalog_fetched: bool,
@@ -48,6 +50,10 @@ impl Home {
                 "Find New Mods".to_string(),
                 Style::default(),
             )],
+            vec![OptionSelectorText::new(
+                "About".to_string(),
+                Style::default(),
+            )],
         ]);
 
         mode_selector.has_focus = true;
@@ -57,9 +63,12 @@ impl Home {
 
         let remote_mod_selector = RemoteModsComponent::new();
 
+        let about = About::new();
+
         let mut this = Self {
             installed_mod_selector,
             remote_mod_selector,
+            about,
             mode_selector,
             quick_ops,
             command_tx: None,
@@ -76,11 +85,11 @@ impl Home {
         self.unfocus_selected();
         let len = self.mode_selector.options.len();
         if len > 1 {
-            if down {
-                self.mode_selector.selected = (self.mode_selector.selected + 1) % len;
+            self.mode_selector.selected = if down {
+                (self.mode_selector.selected + 1) % len
             } else {
-                self.mode_selector.selected = (self.mode_selector.selected + len - 1) % len;
-            }
+                (self.mode_selector.selected + len - 1) % len
+            };
         }
         self.focus_selected();
     }
@@ -90,6 +99,7 @@ impl Home {
             0 => self.quick_ops.focus(),
             1 => self.installed_mod_selector.focus(),
             2 => self.remote_mod_selector.focus(),
+            3 => self.about.focus(),
             _ => {}
         }
     }
@@ -99,6 +109,7 @@ impl Home {
             0 => self.quick_ops.unfocus(),
             1 => self.installed_mod_selector.unfocus(),
             2 => self.remote_mod_selector.unfocus(),
+            3 => self.about.unfocus(),
             _ => {}
         }
     }
@@ -144,6 +155,9 @@ impl Component for Home {
                 }
                 2 => {
                     let _ = self.remote_mod_selector.handle_key_event(key);
+                }
+                3 => {
+                    let _ = self.about.handle_key_event(key);
                 }
                 _ => {}
             },
@@ -231,6 +245,7 @@ impl Component for Home {
         self.installed_mod_selector.update(action.clone())?;
         self.quick_ops.update(action.clone())?;
         self.remote_mod_selector.update(action.clone())?;
+        self.about.update(action.clone())?;
 
         Ok(None)
     }
@@ -293,8 +308,14 @@ impl Component for Home {
             2 => {
                 self.remote_mod_selector.draw(frame, content_chunk)?;
             }
+            3 => {
+                self.about.draw(frame, content_chunk)?;
+            }
             _ => {}
         }
+        let [title_chunk] = Layout::horizontal([Constraint::Length(64)])
+            .flex(Flex::Center)
+            .areas(content_chunk);
 
         frame.render_widget(
             Tabs::new(titles)
@@ -306,9 +327,8 @@ impl Component for Home {
                         .add_modifier(Modifier::BOLD),
                 )
                 .padding("  ", "  "),
-            content_chunk
-                .offset(Offset { x: 1, y: 0 })
-                .centered_horizontally(Constraint::Ratio(1, 2)),
+            title_chunk,
+            //content_chunk.centered_horizontally(Constraint::Ratio(2, 3)),
         );
 
         Ok(())

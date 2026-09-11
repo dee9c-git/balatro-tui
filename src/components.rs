@@ -9,6 +9,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::components::option_selector::Actions;
 use crate::{action::Action, config::Config, tui::Event};
 
+mod about;
 mod authoring;
 pub mod home;
 mod mod_list;
