@@ -235,6 +235,62 @@ pub fn unzip(mut file: &File, base_path: &PathBuf, dir_name: &str) -> Result<(),
     Ok(())
 }
 
+pub async fn install_mod_from_url(url: &str) -> Result<String, String> {
+    let dir = dir_name_from_url(url);
+    let temp_file = download_to_tmp(url).await;
+    let file = temp_file.as_file();
+
+    let mods_dir = get_balatro_appdata_dir().join("Mods");
+    unzip(file, &mods_dir, &dir)?;
+
+    Ok(format!(
+        "Successfully installed mod from {} into {}",
+        url,
+        mods_dir.join(&dir).display()
+    ))
+}
+
+fn dir_name_from_url(url: &str) -> String {
+    let url_path = url.split(['?', '#']).next().unwrap_or(url);
+    let file_name = url_path
+        .rsplit('/')
+        .find(|s| !s.is_empty())
+        .unwrap_or("mod");
+    let folder = file_name
+        .rsplit_once('.')
+        .map(|(stem, _)| stem)
+        .unwrap_or(file_name);
+    if folder.is_empty() {
+        "mod".to_string()
+    } else {
+        folder.to_string()
+    }
+}
+
+pub async fn install_mod_by_name(name: &str) -> Result<String, String> {
+    let mut catalog = fetch_catalog().await;
+    if catalog.is_empty() {
+        catalog = load_catalog();
+    }
+
+    if let Some(remote) = catalog
+        .iter()
+        .find(|m| m.name.eq_ignore_ascii_case(name) || m.identifier.eq_ignore_ascii_case(name))
+    {
+        let target = install_dir(remote);
+        reinstall_mod(remote, false, &target).await?;
+        Ok(format!(
+            "Successfully installed {} {}",
+            remote.name, remote.version
+        ))
+    } else {
+        Err(format!(
+            "Could not find mod named \"{}\" in the catalog",
+            name
+        ))
+    }
+}
+
 pub async fn reinstall_mod(remote: &RemoteMod, disabled: bool, dir: &str) -> Result<(), String> {
     let temp_file = download_to_tmp(&remote.download_url).await;
     let file = temp_file.as_file();

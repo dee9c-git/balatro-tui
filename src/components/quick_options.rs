@@ -165,12 +165,7 @@ impl Component for QuickOptions {
                         .style(Style::default().fg(Color::Gray))
                         .centered(),
                 ])
-                .block(
-                    Block::bordered()
-                        .border_type(BorderType::Thick)
-                        .border_style(Style::default().fg(Color::White))
-                        .merge_borders(MergeStrategy::Exact),
-                ),
+                .block(Block::default()),
                 main_area,
             );
 

@@ -18,6 +18,18 @@ async fn main() -> Result<()> {
     crate::errors::init()?;
 
     let args = Cli::parse();
+
+    if let Some(arg) = args.install_mod {
+        let msg = if arg.starts_with("http://") || arg.starts_with("https://") {
+            balatui::install_mod_from_url(&arg).await
+        } else {
+            balatui::install_mod_by_name(&arg).await
+        }
+        .map_err(|e| color_eyre::eyre::eyre!(e))?;
+        println!("{msg}");
+        return Ok(());
+    }
+
     let mut app = App::new(args.tick_rate, args.frame_rate)?;
 
     // Set max_log_level to Info
