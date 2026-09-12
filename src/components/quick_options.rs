@@ -142,15 +142,19 @@ impl Component for QuickOptions {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> color_eyre::Result<()> {
-        let [about_area, main] =
-            Layout::horizontal([Constraint::Length(60), Constraint::Length(50)])
+        let (about_len, main_len) = (60, 40);
+        let [about_area, right_area] =
+            Layout::horizontal([Constraint::Length(about_len), Constraint::Length(main_len)])
                 .flex(Flex::SpaceEvenly)
                 .areas(area);
+        let [main_area] = Layout::vertical([Constraint::Length(11)])
+            .flex(Flex::Center)
+            .areas(right_area);
         let mut about = About::new();
         about.draw(frame, about_area)?;
 
         if !self.launching_balatro {
-            self.options.draw(frame, main)
+            self.options.draw(frame, main_area)
         } else {
             frame.render_widget(
                 Paragraph::new(vec![
@@ -167,7 +171,7 @@ impl Component for QuickOptions {
                         .border_style(Style::default().fg(Color::White))
                         .merge_borders(MergeStrategy::Exact),
                 ),
-                main,
+                main_area,
             );
 
             Ok(())

@@ -214,8 +214,12 @@ impl Component for RemoteModsComponent {
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3), Constraint::Min(0)])
-            .spacing(Spacing::Overlap(1))
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Min(0),
+                Constraint::Length(1),
+            ])
+            //.spacing(Spacing::Overlap(1))
             .split(area);
 
         // frame.render_widget(
@@ -225,9 +229,15 @@ impl Component for RemoteModsComponent {
         //     .block(Block::bordered().border_type(BorderType::Rounded).title("Search")),
         //     vertical_chunks[0]
         // );
+        let [_, center, _] = Layout::horizontal([
+            Constraint::Length(5),
+            Constraint::Min(0),
+            Constraint::Length(5),
+        ])
+        .areas(vertical_chunks[1]);
         self.searchbar.draw(frame, vertical_chunks[0])?;
         self.options
-            .draw(frame, vertical_chunks[1])
+            .draw(frame, center)
             .expect("Options failed to draw!");
 
         Ok(())

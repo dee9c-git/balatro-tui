@@ -1,13 +1,17 @@
 use super::{Component, Eventable};
+use crate::components::about::About;
 use color_eyre::Result;
 use crossterm::event::KeyEvent;
 use notify::recommended_watcher;
 use notify::{Event, RecursiveMode, Watcher};
+use ratatui::layout::Margin;
+use ratatui::macros::vertical;
 use ratatui::style::Color;
+use ratatui::widgets::{Block, Borders};
 use ratatui::{
     Frame,
-    layout::{Flex, Rect},
-    style::{Style, Stylize},
+    layout::{Constraint, Flex, Layout, Rect},
+    style::Style,
 };
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
@@ -157,7 +161,9 @@ impl Component for ModlistComponent {
                         Actions::Delete(c) => {
                             let m = &self.mods[c];
                             if m.force_enable {
-                                log::error!("This mod is marked as force enabled and cannot be deleted!");
+                                log::error!(
+                                    "This mod is marked as force enabled and cannot be deleted!"
+                                );
                             } else {
                                 match std::fs::remove_dir_all(&m.folder) {
                                     Ok(_) => {
@@ -198,8 +204,26 @@ impl Component for ModlistComponent {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
+        let (about_len, main_len) = (60, 60);
+        let [about_area, right_area] =
+            Layout::horizontal([Constraint::Length(about_len), Constraint::Length(main_len)])
+                .flex(Flex::SpaceEvenly)
+                .areas(area);
+        let mut about = About::new();
+        about.draw(frame, about_area)?;
+        /*
+        let [main_area] = Layout::vertical([Constraint::Length(11)])
+            .flex(Flex::Center)
+            .areas(right_area);
+        */
         self.options
-            .draw(frame, area)
+            .draw(
+                frame,
+                right_area.inner(Margin {
+                    horizontal: 1,
+                    vertical: 1,
+                }),
+            )
             .expect("Options failed to draw!");
         Ok(())
     }

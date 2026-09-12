@@ -12,6 +12,7 @@ use ratatui::{
     text::Span,
     widgets::Paragraph,
 };
+use std::cmp;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::action::Action;
@@ -43,6 +44,7 @@ pub struct OptionSelector {
     pub has_focus: bool,
     pub action_tx: Option<UnboundedSender<Actions>>,
     pub scroll_offset: usize,
+    pub viewport_height: usize,
     pub flex: Flex,
 }
 
@@ -55,6 +57,7 @@ impl Clone for OptionSelector {
         s.app_action_tx = self.app_action_tx.clone();
         s.options = self.options.clone();
         s.scroll_offset = self.scroll_offset;
+        s.viewport_height = self.viewport_height;
         s.flex = self.flex;
 
         s
@@ -71,6 +74,7 @@ impl OptionSelector {
             has_focus: false,
             action_tx: None,
             scroll_offset: 0,
+            viewport_height: 0,
             flex: Flex::Start,
         }
     }
@@ -88,18 +92,20 @@ impl Component for OptionSelector {
                 if len > 1 {
                     self.selected = (self.selected + len - 1) % len;
                 }
-                if self.selected < self.options.len() {
-                    self.scroll_offset = self.selected.saturating_sub(5);
-                }
+                self.scroll_offset = cmp::min(
+                    self.selected.saturating_sub(5),
+                    len.saturating_sub(self.viewport_height),
+                );
             }
             KeyCode::Down => {
                 let len = self.options.len();
                 if len > 1 {
                     self.selected = (self.selected + 1) % len;
                 }
-                if self.selected > 5 {
-                    self.scroll_offset = self.selected.saturating_sub(5);
-                }
+                self.scroll_offset = cmp::min(
+                    self.selected.saturating_sub(5),
+                    len.saturating_sub(self.viewport_height),
+                );
             }
             KeyCode::Enter => {
                 if let Some(tx) = self.action_tx.as_ref() {
@@ -159,12 +165,15 @@ impl Component for OptionSelector {
                 Line::from(lines)
             })
             .collect();
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Thick)
-            .padding(Padding::new(4, 4, 0, 0))
-            .merge_borders(MergeStrategy::Exact)
-            .border_style(Style::default().fg(Color::White));
+        let block = Block::default();
+        /*
+        .borders(Borders::ALL)
+        .border_type(BorderType::Thick)
+        .padding(Padding::new(4, 4, 0, 0))
+        .merge_borders(MergeStrategy::Exact)
+        .border_style(Style::default().fg(Color::White));
+        */
+        self.viewport_height = block.inner(area).height as usize;
 
         if self.flex == Flex::Start {
             let content = Paragraph::new(ops)
