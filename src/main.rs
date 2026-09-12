@@ -1,9 +1,7 @@
+use crate::app::App;
 use clap::Parser;
 use cli::Cli;
 use color_eyre::Result;
-use log::info;
-use crate::app::App;
-use balatui::motd::motd;
 
 mod action;
 mod app;
@@ -12,8 +10,8 @@ mod components;
 mod config;
 mod errors;
 mod logging;
-mod tui;
 mod mods;
+mod tui;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -29,15 +27,13 @@ async fn main() -> Result<()> {
     tui_logger::set_default_level(log::LevelFilter::Info);
     let _config = config::Config::new()?;
 
-    info!("{}", motd());
-
     // let mut temp_file = download_to_tmp("https://github.com/colonthreeing/SealSealBalatro/releases/download/1.1.0/SealSeal.zip").await;
-    // 
+    //
     // let file = temp_file.as_file();
-    // 
+    //
     // unzip(file, &get_balatro_appdata_dir().join("Mods"), "SealSeal");
-    
+
     app.run().await?;
-    
+
     Ok(())
 }

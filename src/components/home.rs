@@ -171,8 +171,6 @@ impl Component for Home {
                             }
                             info!("Got {} mods in {:.2}s", mods.len(), elapsed.as_secs_f64());
                             let _ = tx.send(Action::CatalogFetched(mods));
-                            tokio::time::sleep(Duration::from_millis(1500)).await;
-                            info!("{}", motd());
                         });
                     }
                 }

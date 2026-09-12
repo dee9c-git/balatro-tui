@@ -1,5 +1,6 @@
 use crate::action::Action;
 use crate::components::Component;
+use balatui::motd::motd;
 use color_eyre::Result;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
@@ -10,11 +11,15 @@ use ratatui::widgets::{Block, Padding, Paragraph};
 
 pub struct About {
     has_focus: bool,
+    motd: String,
 }
 
 impl About {
     pub fn new() -> Self {
-        Self { has_focus: false }
+        Self {
+            has_focus: false,
+            motd: motd(),
+        }
     }
 }
 
@@ -35,14 +40,20 @@ impl Component for About {
                 make_colored_line("██   ██ ██▀▀▀██ ██      ██▀▀▀██   ██   ██   ██ ██"),
                 make_colored_line("██▄▄█▀  ██   ██ ██▄▄▄▄▄ ██   ██   ██   ▀█▄▄█▀  ██"),
                 Line::from(""),
-                Line::from("Balatro Mod Manager in the terminal"),
                 Line::from(""),
+                Line::from(Span::styled(
+                    self.motd.to_owned(),
+                    Style::default().fg(Color::Green),
+                )),
+                Line::from(""),
+                Line::from("Balatro Mod Manager in the terminal"),
                 Line::from("Original balatro-tui by colonthreeing"),
                 Line::from("Modified by Dee9c"),
+                Line::from(""),
             ])
             .alignment(Alignment::Center)
             .block(Block::default().padding(Padding::new(4, 4, 1, 1))),
-            area.centered_vertically(Constraint::Length(14)),
+            area.centered_vertically(Constraint::Length(16)),
         );
 
         Ok(())

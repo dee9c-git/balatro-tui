@@ -1,7 +1,14 @@
-use rand::rng;
 use rand::seq::IndexedRandom;
+use rand::rng;
+use std::sync::LazyLock;
 
 pub fn motd() -> String {
+    MOTD.clone()
+}
+
+static MOTD: LazyLock<String> = LazyLock::new(random_motd);
+
+fn random_motd() -> String {
     let potentials = vec![
         "First we Ball, then we Atro. We Balatro!",
         "Someone call Bean!",
