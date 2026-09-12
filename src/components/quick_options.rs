@@ -5,6 +5,7 @@ use crate::components::{Component, Eventable};
 use crate::config::get_data_dir;
 use balatui::{get_balatro_appdata_dir, get_balatro_dir, install_lovely, launch_balatro, open};
 use crossterm::event::KeyEvent;
+use log::*;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::prelude::Color;
@@ -59,6 +60,10 @@ impl QuickOptions {
             )],
             vec![OptionSelectorText::new(
                 "Reinstall/Update All Mods".to_string(),
+                Style::default(),
+            )],
+            vec![OptionSelectorText::new(
+                "Check Out the GitHub".to_string(),
                 Style::default(),
             )],
         ]);
@@ -126,6 +131,14 @@ impl Component for QuickOptions {
                             6 => {
                                 if let Some(tx) = self.action_tx.clone() {
                                     let _ = tx.send(Action::ReinstallMods);
+                                }
+                            }
+                            7 => {
+                                let url = "https://github.com/dee9c-git/balatui";
+                                if let Err(err) = opener::open(url) {
+                                    error!("Failed to open {} :c", err);
+                                } else {
+                                    info!("Opened {}", url);
                                 }
                             }
                             _ => {}
