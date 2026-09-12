@@ -9,7 +9,7 @@ use ratatui::layout::Direction;
 use ratatui::style::Color;
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect, Spacing},
+    layout::{Constraint, Layout, Rect},
     style::Style,
 };
 use tokio::sync::mpsc;

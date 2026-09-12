@@ -14,7 +14,7 @@ pub struct Cli {
     pub frame_rate: f64,
 
     /// Install a mod from a custom download URL, or by name from the catalog, and exit
-    #[arg(long, value_name = "MOD_OR_URL")]
+    #[arg(short, long, value_name = "MOD_OR_URL")]
     pub install_mod: Option<String>,
 }
 

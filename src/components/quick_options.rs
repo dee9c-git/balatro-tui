@@ -9,9 +9,8 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::prelude::Color;
 use ratatui::style::Style;
-use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
-use ratatui::widgets::{Block, BorderType, Paragraph};
+use ratatui::widgets::{Block, Paragraph};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 

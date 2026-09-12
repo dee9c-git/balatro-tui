@@ -29,7 +29,7 @@ impl Component for About {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
-        fn make_colored_line(text: &str) -> Line {
+        fn make_colored_line(text: &str) -> Line<'_> {
             Line::from(Span::styled(text, Style::default().fg(Color::Blue)))
         }
         frame.render_widget(
