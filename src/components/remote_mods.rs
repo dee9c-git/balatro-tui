@@ -4,7 +4,7 @@ use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::info;
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
-use nucleo_matcher::{Config, Matcher};
+use nucleo_matcher::{Config, Matcher, Utf32Str};
 use ratatui::layout::{Direction, Margin, Spacing};
 use ratatui::style::{Color, Style};
 use ratatui::{
@@ -80,6 +80,7 @@ impl RemoteModsComponent {
         self.options.options.clear();
 
         self.displayed_mods.iter_mut().for_each(|m| {
+            let source_tag = if m.source == "thunderstore" { " TS" } else { "" };
             self.options.options.push(
                 vec![
                     OptionSelectorText::new(m.name.clone(), Style::default()),
@@ -87,38 +88,37 @@ impl RemoteModsComponent {
                         format!(" by {}", m.owner.clone()),
                         Style::default().fg(Color::DarkGray),
                     ),
+                    OptionSelectorText::new(
+                        source_tag.to_string(),
+                        Style::default().fg(Color::LightMagenta),
+                    ),
                 ], //                Span::styled(format!("{} {} by {:?}", m.name, m.version, m.author), Style::default().fg(Color::Green)),
             );
         });
     }
     fn search(&mut self, query: String) {
-        let names: Vec<String> = self
-            .mods
-            .iter()
-            .map(|m| m.name.clone().to_lowercase())
-            .collect();
-        let _all_mods: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
-
         let mut matcher = Matcher::new(Config::DEFAULT.match_paths());
 
-        let _threshold = 0.4f32;
         if query.is_empty() {
             self.displayed_mods = self.mods.clone();
         } else {
-            // let res: Vec<(&str, f32)> = fuzzy_search_threshold(&*query, &all_mods, threshold);
-
-            let res = Pattern::parse(&*query, CaseMatching::Ignore, Normalization::Smart)
-                .match_list(names, &mut matcher);
-
-            let mut filtered_mods: Vec<RemoteMod> = Vec::new();
-            for (m, _) in res {
-                let mod_name = m.to_string();
-                let mod_opt = self.mods.iter().find(|m| m.name.to_lowercase() == mod_name);
-                if mod_opt.is_some() {
-                    filtered_mods.push(mod_opt.unwrap().clone());
+            // Match each mod against the query, keeping a 1:1 index mapping so
+            // mods with identical names aren't collapsed into the first match.
+            let pattern = Pattern::parse(&*query, CaseMatching::Ignore, Normalization::Smart);
+            let mut buf: Vec<char> = Vec::new();
+            let mut scored: Vec<(usize, f32)> = Vec::new();
+            for (i, m) in self.mods.iter().enumerate() {
+                let hay = Utf32Str::new(&m.name, &mut buf);
+                if let Some(score) = pattern.score(hay, &mut matcher) {
+                    scored.push((i, score as f32));
                 }
             }
-            self.displayed_mods = filtered_mods;
+            scored.sort_by(|a, b| b.1.total_cmp(&a.1));
+
+            self.displayed_mods = scored
+                .into_iter()
+                .map(|(i, _)| self.mods[i].clone())
+                .collect();
         }
 
         self.build_options();

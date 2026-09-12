@@ -6,7 +6,7 @@ use crate::components::quick_options::QuickOptions;
 use crate::components::remote_mods::RemoteModsComponent;
 use crate::config::Config;
 use crate::mods::{ModList, is_same_mod};
-use balatui::{RemoteMod, fetch_catalog, install_dir, load_catalog, reinstall_mod, save_catalog};
+use balatui::{RemoteMod, fetch_catalogs, install_dir, load_catalog, reinstall_mod, save_catalog};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
@@ -162,7 +162,7 @@ impl Component for Home {
                         tokio::spawn(async move {
                             info!("Rerolling for mods...");
                             let start = Instant::now();
-                            let mods = fetch_catalog().await;
+                            let mods = fetch_catalogs().await;
                             let elapsed = start.elapsed();
                             if !mods.is_empty() {
                                 save_catalog(&mods);

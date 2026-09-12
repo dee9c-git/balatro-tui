@@ -54,10 +54,14 @@ impl Component for ModDesc {
                     label_line("Name", m.name.clone()),
                     label_line("Version", m.version.clone()),
                     label_line("By", m.owner.clone()),
+                    label_line("Source", m.source.clone()),
                     label_line("Categories", m.categories.join(", ")),
                     label_line("Repo", m.repo.clone()),
-                    Line::from(""),
                 ];
+                if !m.package_url.is_empty() {
+                    lines.push(label_line("Package", m.package_url.clone()));
+                }
+                lines.push(Line::from(""));
                 for line in m.description.lines() {
                     lines.push(Line::from(Span::styled(
                         line.to_string(),

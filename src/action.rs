@@ -2,7 +2,7 @@ use balatui::RemoteMod;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-#[derive(Debug, Clone, Display, Serialize, Deserialize)]
+#[derive(Debug, Clone, Display, PartialEq, Serialize, Deserialize)]
 pub enum Action {
     Tick,
     Render,

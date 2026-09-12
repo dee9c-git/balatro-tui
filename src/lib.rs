@@ -4,6 +4,7 @@ use log::{error, info};
 use platform_dirs::AppDirs;
 use reqwest::get;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
@@ -13,6 +14,7 @@ use std::process::{Child, Command};
 use tempfile::NamedTempFile;
 
 const MOD_CATALOG_URL: &str = "https://media.githubusercontent.com/media/frostice482/balatro-mod-index-tiny/master/out.json.gz";
+const TS_CATALOG_URL: &str = "https://thunderstore.io/c/balatro/api/v1/package/";
 
 pub fn catalog_cache_path() -> PathBuf {
     if let Some(proj_dirs) =
@@ -42,7 +44,7 @@ pub fn load_catalog() -> Vec<RemoteMod> {
     }
 }
 
-#[derive(Deserialize, Serialize, Default, Debug, Clone)]
+#[derive(Deserialize, Serialize, Default, Debug, Clone, PartialEq)]
 pub struct RemoteMod {
     pub name: String,
     pub version: String,
@@ -58,7 +60,41 @@ pub struct RemoteMod {
     pub id: String,
     #[serde(default)]
     pub description: String,
+    #[serde(default = "default_source")]
+    pub source: String,
+    #[serde(default)]
+    pub package_url: String,
 }
+
+fn default_source() -> String {
+    "bmi".to_string()
+}
+
+#[derive(Deserialize)]
+struct TsPackage {
+    name: String,
+    owner: String,
+    #[serde(rename = "package_url", default)]
+    package_url: String,
+    #[serde(default)]
+    categories: Vec<String>,
+    #[serde(default)]
+    is_deprecated: bool,
+    #[serde(default)]
+    versions: Vec<TsVersion>,
+}
+
+#[derive(Deserialize)]
+struct TsVersion {
+    #[serde(rename = "version_number")]
+    version_number: String,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    download_url: String,
+}
+
+const TS_BLACKLIST: &[&str] = &["r2modman", "lovely"];
 
 pub fn install_dir(remote: &RemoteMod) -> String {
     if remote.folder_name.is_empty() {
@@ -107,6 +143,81 @@ pub async fn fetch_catalog() -> Vec<RemoteMod> {
             vec![]
         }
     }
+}
+
+pub async fn fetch_ts_catalog() -> Vec<RemoteMod> {
+    match get(TS_CATALOG_URL).await {
+        Ok(resp) => match resp.json::<Vec<TsPackage>>().await {
+            Ok(packages) => {
+                let mods: Vec<RemoteMod> = packages
+                    .iter()
+                    .filter(|p| {
+                        !p.is_deprecated && !TS_BLACKLIST.contains(&p.name.to_lowercase().as_str())
+                    })
+                    .filter_map(|p| {
+                        let v = p.versions.first()?;
+                        Some(RemoteMod {
+                            name: p.name.clone(),
+                            version: v.version_number.clone(),
+                            owner: p.owner.clone(),
+                            categories: p.categories.clone(),
+                            repo: String::new(),
+                            download_url: v.download_url.clone(),
+                            folder_name: format!("{}@{}", p.owner, p.name),
+                            identifier: p.name.clone(),
+                            id: p.name.clone(),
+                            description: v.description.clone(),
+                            source: "thunderstore".to_string(),
+                            package_url: p.package_url.clone(),
+                        })
+                    })
+                    .collect();
+                info!("Fetched {} mods from Thunderstore", mods.len());
+                mods
+            }
+            Err(e) => {
+                error!("Failed to parse Thunderstore catalog: {}", e);
+                vec![]
+            }
+        },
+        Err(e) => {
+            error!("Failed to fetch Thunderstore catalog: {}", e);
+            vec![]
+        }
+    }
+}
+
+fn merge_key(m: &RemoteMod) -> String {
+    format!(
+        "{}/{}",
+        m.owner.to_lowercase(),
+        m.name.to_lowercase()
+    )
+}
+
+/// Merges BMI and Thunderstore catalogs into a single list.
+///
+/// On a collision (same owner + same name in both sources), the Thunderstore
+/// entry wins. Distinct mods sharing a name across different owners are always
+/// kept.
+pub fn merge_catalogs(bmi: Vec<RemoteMod>, ts: Vec<RemoteMod>) -> Vec<RemoteMod> {
+    let mut map: HashMap<String, RemoteMod> = HashMap::with_capacity(bmi.len() + ts.len());
+
+    for m in bmi {
+        map.entry(merge_key(&m)).or_insert(m);
+    }
+    for m in ts {
+        map.insert(merge_key(&m), m);
+    }
+
+    let mut merged: Vec<RemoteMod> = map.into_values().collect();
+    merged.sort_by(|a, b| a.name.cmp(&b.name));
+    merged
+}
+
+pub async fn fetch_catalogs() -> Vec<RemoteMod> {
+    let (bmi, ts) = tokio::join!(fetch_catalog(), fetch_ts_catalog());
+    merge_catalogs(bmi, ts)
 }
 
 pub fn launch_balatro(disable_console: bool) -> Result<Child, std::io::Error> {
@@ -345,5 +456,67 @@ pub async fn install_lovely() {
         info!(
             "Successfully Installed Lovely! You may need to set the launch options in Steam to \"WINEDLLOVERRIDES=\"version=n,b\" %command%\""
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mod_entry(source: &str, name: &str, owner: &str) -> RemoteMod {
+        RemoteMod {
+            name: name.to_string(),
+            version: "1.0.0".to_string(),
+            owner: owner.to_string(),
+            categories: vec![],
+            repo: String::new(),
+            download_url: format!("https://example.com/{}/{}", owner, name),
+            folder_name: format!("{}@{}", owner, name),
+            identifier: name.to_string(),
+            id: name.to_string(),
+            description: String::new(),
+            source: source.to_string(),
+            package_url: String::new(),
+        }
+    }
+
+    #[test]
+    fn ts_wins_on_same_owner_and_name() {
+        let bmi = vec![mod_entry("bmi", "Steamodded", "notnirep")];
+        let ts = vec![mod_entry("thunderstore", "Steamodded", "notnirep")];
+
+        let merged = merge_catalogs(bmi, ts);
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].source, "thunderstore");
+    }
+
+    #[test]
+    fn same_name_different_owner_both_kept() {
+        let a = mod_entry("thunderstore", "cryo", "alex");
+        let b = mod_entry("thunderstore", "cryo", "bob");
+
+        let merged = merge_catalogs(vec![], vec![a, b]);
+        assert_eq!(merged.len(), 2);
+    }
+
+    #[test]
+    fn distinct_mods_kept_and_sorted() {
+        let bmi_a = mod_entry("bmi", "Apple", "farmer");
+        let ts_b = mod_entry("thunderstore", "Banana", "grocer");
+
+        let merged = merge_catalogs(vec![bmi_a], vec![ts_b]);
+        assert_eq!(merged.len(), 2);
+        assert_eq!(merged[0].name, "Apple");
+        assert_eq!(merged[1].name, "Banana");
+    }
+
+    #[test]
+    fn merge_is_case_insensitive() {
+        let bmi = vec![mod_entry("bmi", "Steamodded", "NotNirep")];
+        let ts = vec![mod_entry("thunderstore", "Steamodded", "notnirep")];
+
+        let merged = merge_catalogs(bmi, ts);
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].source, "thunderstore");
     }
 }
