@@ -1,6 +1,5 @@
 use super::Component;
 use crate::action::Action;
-use crate::components::about::About;
 use crate::components::mod_list::ModlistComponent;
 use crate::components::option_selector::{OptionSelector, OptionSelectorText};
 use crate::components::quick_options::QuickOptions;
@@ -13,8 +12,7 @@ use balatui::{
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
-use ratatui::layout::{Flex, Offset, Spacing};
-use ratatui::symbols::merge::MergeStrategy;
+use ratatui::layout::{Flex, Offset};
 use ratatui::{prelude::*, widgets::*};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
@@ -26,7 +24,6 @@ pub struct Home {
     quick_ops: QuickOptions,
     installed_mod_selector: ModlistComponent,
     remote_mod_selector: RemoteModsComponent,
-    about: About,
     mode_selector: OptionSelector,
     has_focus: bool,
     catalog_fetched: bool,
@@ -50,10 +47,6 @@ impl Home {
                 "Find New Mods".to_string(),
                 Style::default(),
             )],
-            vec![OptionSelectorText::new(
-                "About".to_string(),
-                Style::default(),
-            )],
         ]);
 
         mode_selector.has_focus = true;
@@ -63,12 +56,9 @@ impl Home {
 
         let remote_mod_selector = RemoteModsComponent::new();
 
-        let about = About::new();
-
         let mut this = Self {
             installed_mod_selector,
             remote_mod_selector,
-            about,
             mode_selector,
             quick_ops,
             command_tx: None,
@@ -99,7 +89,6 @@ impl Home {
             0 => self.quick_ops.focus(),
             1 => self.installed_mod_selector.focus(),
             2 => self.remote_mod_selector.focus(),
-            3 => self.about.focus(),
             _ => {}
         }
     }
@@ -109,7 +98,6 @@ impl Home {
             0 => self.quick_ops.unfocus(),
             1 => self.installed_mod_selector.unfocus(),
             2 => self.remote_mod_selector.unfocus(),
-            3 => self.about.unfocus(),
             _ => {}
         }
     }
@@ -158,9 +146,6 @@ impl Component for Home {
                 }
                 2 => {
                     let _ = self.remote_mod_selector.handle_key_event(key);
-                }
-                3 => {
-                    let _ = self.about.handle_key_event(key);
                 }
                 _ => {}
             },
@@ -248,14 +233,17 @@ impl Component for Home {
         self.installed_mod_selector.update(action.clone())?;
         self.quick_ops.update(action.clone())?;
         self.remote_mod_selector.update(action.clone())?;
-        self.about.update(action.clone())?;
 
         Ok(None)
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
-        let [main, bottom_line] =
-            Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(area);
+        let [main, _, bottom_line] = Layout::vertical([
+            Constraint::Min(0),
+            Constraint::Length(1),
+            Constraint::Length(1),
+        ])
+        .areas(area);
         frame.render_widget(
             Block::bordered()
                 .fg(Color::White)
@@ -286,28 +274,11 @@ impl Component for Home {
             2 => {
                 self.remote_mod_selector.draw(frame, main)?;
             }
-            3 => {
-                self.about.draw(frame, main)?;
-            }
             _ => {}
         }
-        let [_, title, options, _] = Layout::horizontal([
-            Constraint::Length(3),
-            Constraint::Min(0),
-            Constraint::Length(64),
-            Constraint::Length(3),
-        ])
-        .areas(main);
-        frame.render_widget(
-            Block::default().title(
-                Line::from(" BALATUI ")
-                    .bold()
-                    .bg(Color::White)
-                    .fg(Color::Black),
-            ),
-            title,
-        );
-
+        let [options] = Layout::horizontal([Constraint::Length(54)])
+            .flex(Flex::Center)
+            .areas(main);
         frame.render_widget(
             Tabs::new(titles)
                 .select(self.mode_selector.selected)
@@ -323,15 +294,7 @@ impl Component for Home {
 
         frame.render_widget(
             TuiLoggerWidget::default()
-                .block(
-                    Block::default()
-                        .padding(Padding::new(3, 3, 0, 0))
-                        /*
-                                             .borders(Borders::ALL)
-                                             .border_type(BorderType::Thick)
-                                             .merge_borders(MergeStrategy::Exact), //.padding(Padding::new(4, 4, 1, 1))
-                                                                                   */
-                )
+                .block(Block::default().padding(Padding::new(3, 3, 0, 0)))
                 .output_level(None)
                 .style_info(Style::default().fg(Color::LightGreen))
                 .style_warn(Style::default().fg(Color::Yellow))
@@ -366,17 +329,13 @@ impl Component for Home {
                 keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
                 keys.push("[Esc: Exit]".to_string());
             }
-            3 => {
-                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
-                keys.push("[Esc: Exit]".to_string());
-            }
             _ => {}
         }
         frame.render_widget(
-            Paragraph::new(Text::from(keys.join(" ")))
+            Paragraph::new(Text::from(format!("  {}  ", keys.join("  "))))
                 .block(Block::default().style(Style::default().fg(Color::White)))
                 .alignment(Alignment::Center),
-            bottom_line.offset(Offset { x: 0, y: -1 }),
+            bottom_line.offset(Offset { x: 0, y: -2 }),
         );
         Ok(())
     }

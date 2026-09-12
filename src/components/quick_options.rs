@@ -51,7 +51,7 @@ impl QuickOptions {
                 Style::default(),
             )],
             vec![OptionSelectorText::new(
-                "Open Balatro-tui Data Folder".to_string(),
+                "Open Balatui Data Folder".to_string(),
                 Style::default(),
             )],
             vec![OptionSelectorText::new(

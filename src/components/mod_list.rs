@@ -5,9 +5,7 @@ use crossterm::event::KeyEvent;
 use notify::recommended_watcher;
 use notify::{Event, RecursiveMode, Watcher};
 use ratatui::layout::Margin;
-use ratatui::macros::vertical;
 use ratatui::style::Color;
-use ratatui::widgets::{Block, Borders};
 use ratatui::{
     Frame,
     layout::{Constraint, Flex, Layout, Rect},

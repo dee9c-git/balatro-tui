@@ -5,9 +5,8 @@ use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, BorderType, Padding, Paragraph};
+use ratatui::widgets::{Block, Padding, Paragraph};
 
 pub struct About {
     has_focus: bool,
@@ -39,7 +38,7 @@ impl Component for About {
                 Line::from("Balatro Mod Manager in the terminal"),
                 Line::from(""),
                 Line::from("Original balatro-tui by colonthreeing"),
-                Line::from("Modifided by Dee9c"),
+                Line::from("Modified by Dee9c"),
             ])
             .alignment(Alignment::Center)
             .block(Block::default().padding(Padding::new(4, 4, 1, 1))),
