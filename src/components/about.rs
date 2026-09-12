@@ -3,10 +3,10 @@ use crate::components::Component;
 use color_eyre::Result;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use ratatui::layout::Rect;
+use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::symbols::merge::MergeStrategy;
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, BorderType, Padding, Paragraph};
 
 pub struct About {
@@ -25,18 +25,28 @@ impl Component for About {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
+        fn make_colored_line(text: &str) -> Line {
+            Line::from(Span::styled(text, Style::default().fg(Color::Blue)))
+        }
         frame.render_widget(
             Paragraph::new(vec![
-                Line::from("balatui - a work in progress TUI mod manager for Balatro"),
-                Line::from("Requires Lovely and Steamodded to get the most out of it"),
-                Line::from("Use Tab/Shift+Tab to move between tabs"),
-                Line::from("Quick Options: launch Balatro, open folders, update mods"),
+                make_colored_line("██▀▀█▄   ▄█▀▀█▄ ██       ▄█▀▀█▄ ▀▀██▀▀ ██   ██ ██"),
+                make_colored_line("██  ██  ██   ██ ██      ██   ██   ██   ██   ██ ██"),
+                make_colored_line("██▀▀▀█▄ ██   ██ ██      ██   ██   ██   ██   ██ ██"),
+                make_colored_line("██   ██ ██▀▀▀██ ██      ██▀▀▀██   ██   ██   ██ ██"),
+                make_colored_line("██▄▄█▀  ██   ██ ██▄▄▄▄▄ ██   ██   ██   ▀█▄▄█▀  ██"),
+                Line::from(""),
+                Line::from("Balatro Mod Manager in the terminal"),
+                Line::from(""),
+                Line::from("Original balatro-tui by colonthreeing"),
+                Line::from("Modifided by Dee9c"),
             ])
+            .alignment(Alignment::Center)
             .block(
                 Block::bordered()
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
-                    .padding(Padding::new(4, 4, 0, 0))
+                    .padding(Padding::new(4, 4, 1, 1))
                     .border_style(Style::default().fg(Color::White)),
             ),
             area,
@@ -53,4 +63,3 @@ impl Component for About {
         self.has_focus = false;
     }
 }
-
