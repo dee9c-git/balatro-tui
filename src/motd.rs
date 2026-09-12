@@ -24,4 +24,3 @@ pub fn motd() -> String {
     let random = potentials.choose(&mut rng());
     random.unwrap().to_string()
 }
-

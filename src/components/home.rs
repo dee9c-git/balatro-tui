@@ -320,7 +320,7 @@ impl Component for Home {
             1 => {
                 keys.push("[Up/Down: Select Mod]".to_string());
                 keys.push("[Shift+D: Delete Mod]".to_string());
-                keys.push("[Enter: Select Option]".to_string());
+                keys.push("[Enter: Enable/Disable Mod]".to_string());
                 keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
                 keys.push("[Esc: Exit]".to_string());
             }
