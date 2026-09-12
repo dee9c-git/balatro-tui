@@ -1,0 +1,3 @@
+Red: e7463e
+Blue: 0286ea
+Yellow: dfa242

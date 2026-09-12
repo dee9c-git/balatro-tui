@@ -81,11 +81,6 @@ impl RemoteModsComponent {
             self.options.options.push(
                 vec![
                     OptionSelectorText::new(m.name.clone(), Style::default()),
-                    /*
-                    OptionSelectorText::new(
-                        format!(" {} ", m.version.clone()),
-                        Style::default().fg(Color::LightBlue),
-                    ), */
                     OptionSelectorText::new(
                         format!(" by {}", m.owner.clone()),
                         Style::default().fg(Color::DarkGray),
@@ -219,16 +214,8 @@ impl Component for RemoteModsComponent {
                 Constraint::Min(0),
                 Constraint::Length(1),
             ])
-            //.spacing(Spacing::Overlap(1))
             .split(area);
 
-        // frame.render_widget(
-        //     Paragraph::new(Text::from(
-        //         Span::styled("Your Input Here", Style::default().fg(Color::Green)),
-        //     ))
-        //     .block(Block::bordered().border_type(BorderType::Rounded).title("Search")),
-        //     vertical_chunks[0]
-        // );
         let [_, center, _] = Layout::horizontal([
             Constraint::Length(5),
             Constraint::Min(0),

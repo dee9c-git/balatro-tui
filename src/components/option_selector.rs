@@ -2,9 +2,8 @@ use super::{Component, Eventable};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Modifier};
-use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
-use ratatui::widgets::{Block, BorderType, Borders, Padding};
+use ratatui::widgets::Block;
 use ratatui::{
     Frame,
     layout::{Constraint, Flex, Layout, Rect},
@@ -157,7 +156,7 @@ impl Component for OptionSelector {
                 if !lines.is_empty() && op_i == self.selected + 1 {
                     lines[0] = lines[0].clone().style(
                         Style::default()
-                            .fg(Color::Green)
+                            .fg(Color::LightYellow)
                             .add_modifier(Modifier::BOLD),
                     );
                 }
@@ -166,13 +165,6 @@ impl Component for OptionSelector {
             })
             .collect();
         let block = Block::default();
-        /*
-        .borders(Borders::ALL)
-        .border_type(BorderType::Thick)
-        .padding(Padding::new(4, 4, 0, 0))
-        .merge_borders(MergeStrategy::Exact)
-        .border_style(Style::default().fg(Color::White));
-        */
         self.viewport_height = block.inner(area).height as usize;
 
         if self.flex == Flex::Start {

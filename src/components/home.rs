@@ -6,15 +6,13 @@ use crate::components::quick_options::QuickOptions;
 use crate::components::remote_mods::RemoteModsComponent;
 use crate::config::Config;
 use crate::mods::{ModList, is_same_mod};
-use balatui::{
-    RemoteMod, fetch_catalog, install_dir, load_catalog, motd::motd, reinstall_mod, save_catalog,
-};
+use balatui::{RemoteMod, fetch_catalog, install_dir, load_catalog, reinstall_mod, save_catalog};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use log::{error, info};
 use ratatui::layout::{Flex, Offset};
 use ratatui::{prelude::*, widgets::*};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::sync::mpsc::UnboundedSender;
 use tui_logger::TuiLoggerWidget;
 
@@ -283,7 +281,7 @@ impl Component for Home {
                 .divider("/")
                 .highlight_style(
                     Style::default()
-                        .fg(Color::Green)
+                        .fg(Color::LightYellow)
                         .add_modifier(Modifier::BOLD),
                 )
                 .padding("  ", "  "),
@@ -294,10 +292,10 @@ impl Component for Home {
             TuiLoggerWidget::default()
                 .block(Block::default().padding(Padding::new(3, 3, 0, 0)))
                 .output_level(None)
-                .style_info(Style::default().fg(Color::LightGreen))
+                .style_info(Style::default().fg(Color::Blue))
                 .style_warn(Style::default().fg(Color::Yellow))
                 .style_error(Style::default().fg(Color::Red))
-                .style_debug(Style::default().fg(Color::Blue))
+                .style_debug(Style::default().fg(Color::White))
                 .output_file(false)
                 .output_target(false)
                 .output_timestamp(None)
