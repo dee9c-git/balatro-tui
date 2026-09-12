@@ -56,10 +56,14 @@ impl Component for ModDesc {
                     label_line("By", m.owner.clone()),
                     label_line("Source", m.source.clone()),
                     label_line("Categories", m.categories.join(", ")),
-                    label_line("Repo", m.repo.clone()),
                 ];
-                if !m.package_url.is_empty() {
-                    lines.push(label_line("Package", m.package_url.clone()));
+                let repo = if m.repo.is_empty() {
+                    m.package_url.clone()
+                } else {
+                    m.repo.clone()
+                };
+                if !repo.is_empty() {
+                    lines.push(label_line("Website", repo));
                 }
                 lines.push(Line::from(""));
                 for line in m.description.lines() {
@@ -92,4 +96,3 @@ impl Component for ModDesc {
         self.has_focus = false;
     }
 }
-
