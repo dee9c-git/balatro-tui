@@ -48,7 +48,7 @@ impl Home {
         ]);
 
         mode_selector.has_focus = true;
-        //mode_selector.title = "Modes (Move with Tab/Shift+Tab)".to_string();
+        //mode_selector.title = "Modes (Move with Left/Right)".to_string();
 
         let quick_ops = QuickOptions::new();
 
@@ -129,10 +129,10 @@ impl Component for Home {
             return Ok(None);
         }
         match key.code {
-            KeyCode::Tab => {
+            KeyCode::Right => {
                 self.select_mode(true);
             }
-            KeyCode::BackTab => {
+            KeyCode::Left => {
                 self.select_mode(false);
             }
             _ => match self.mode_selector.selected {
@@ -308,21 +308,19 @@ impl Component for Home {
 
         match self.mode_selector.selected {
             0 => {
-                keys.push("[Up/Down: Switch Option]".to_string());
                 keys.push("[Enter: Select Option]".to_string());
-                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Up/Down/Left/Right: Navigate]".to_string());
                 keys.push("[Esc: Exit]".to_string());
             }
             1 => {
-                keys.push("[Up/Down: Select Mod]".to_string());
                 keys.push("[Shift+D: Delete Mod]".to_string());
                 keys.push("[Enter: Enable/Disable Mod]".to_string());
-                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Up/Down/Left/Right: Navigate]".to_string());
                 keys.push("[Esc: Exit]".to_string());
             }
             2 => {
                 keys.push("[Enter: Install Mod]".to_string());
-                keys.push("[Tab/Shift+Tab: Switch Tabs]".to_string());
+                keys.push("[Up/Down/Left/Right: Navigate]".to_string());
                 keys.push("[Esc: Exit]".to_string());
             }
             _ => {}
