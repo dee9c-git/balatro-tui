@@ -1,11 +1,12 @@
 use crate::action::Action;
+use crate::components::about::About;
 use crate::components::option_selector::{Actions, OptionSelector, OptionSelectorText};
 use crate::components::{Component, Eventable};
 use crate::config::get_data_dir;
 use balatui::{get_balatro_appdata_dir, get_balatro_dir, install_lovely, launch_balatro, open};
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use ratatui::layout::Rect;
+use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::prelude::Color;
 use ratatui::style::Style;
 use ratatui::symbols::merge::MergeStrategy;
@@ -141,8 +142,15 @@ impl Component for QuickOptions {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> color_eyre::Result<()> {
+        let [about_area, main] =
+            Layout::horizontal([Constraint::Length(60), Constraint::Length(50)])
+                .flex(Flex::SpaceEvenly)
+                .areas(area);
+        let mut about = About::new();
+        about.draw(frame, about_area)?;
+
         if !self.launching_balatro {
-            self.options.draw(frame, area)
+            self.options.draw(frame, main)
         } else {
             frame.render_widget(
                 Paragraph::new(vec![
@@ -159,7 +167,7 @@ impl Component for QuickOptions {
                         .border_style(Style::default().fg(Color::White))
                         .merge_borders(MergeStrategy::Exact),
                 ),
-                area,
+                main,
             );
 
             Ok(())

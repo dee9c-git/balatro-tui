@@ -256,6 +256,12 @@ impl Component for Home {
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let [main, bottom_line] =
             Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(area);
+        frame.render_widget(
+            Block::bordered()
+                .fg(Color::White)
+                .border_type(BorderType::Thick),
+            main,
+        );
         let titles: Vec<Line> = self
             .mode_selector
             .options

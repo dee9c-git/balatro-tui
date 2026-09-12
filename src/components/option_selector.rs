@@ -174,8 +174,9 @@ impl Component for OptionSelector {
         } else {
             let inner = block.inner(area);
             frame.render_widget(block, area);
-            let [_, items_area] =
-                Layout::horizontal([Constraint::Ratio(1, 4), Constraint::Min(0)]).areas(inner);
+            let [items_area] = Layout::horizontal([Constraint::Min(0)])
+                .flex(Flex::Center)
+                .areas(inner);
             let spaced = self.flex == Flex::SpaceBetween;
             let item_rows: Vec<Line> = if spaced {
                 ops.iter()
