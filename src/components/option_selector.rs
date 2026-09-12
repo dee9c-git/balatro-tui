@@ -2,6 +2,7 @@ use super::{Component, Eventable};
 use color_eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Modifier};
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 use ratatui::{
@@ -164,7 +165,7 @@ impl Component for OptionSelector {
                 Line::from(lines)
             })
             .collect();
-        let block = Block::default();
+        let block = Block::default().merge_borders(MergeStrategy::Exact);
         self.viewport_height = block.inner(area).height as usize;
 
         if self.flex == Flex::Start {

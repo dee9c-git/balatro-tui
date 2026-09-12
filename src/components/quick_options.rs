@@ -141,7 +141,7 @@ impl Component for QuickOptions {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> color_eyre::Result<()> {
-        let (about_len, main_len) = (60, 40);
+        let (about_len, main_len) = (60, 60);
         let [about_area, right_area] =
             Layout::horizontal([Constraint::Length(about_len), Constraint::Length(main_len)])
                 .flex(Flex::SpaceEvenly)

@@ -63,7 +63,7 @@ impl Component for TextInput {
                 Block::bordered()
                     .border_type(BorderType::Thick)
                     .merge_borders(MergeStrategy::Exact)
-                    .padding(Padding::new(4, 4, 0, 0))
+                    .padding(Padding::new(4, 4, 1, 1))
                     .border_style(Style::default().fg(Color::White))
                     .title(Line::from(self.title.clone()).centered()),
             ),

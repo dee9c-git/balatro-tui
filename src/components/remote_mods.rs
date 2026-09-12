@@ -5,17 +5,17 @@ use crossterm::event::{KeyCode, KeyEvent};
 use log::info;
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
-use ratatui::layout::Direction;
-use ratatui::style::Color;
+use ratatui::layout::{Direction, Margin, Spacing};
+use ratatui::style::{Color, Style};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Rect},
-    style::Style,
 };
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::action::Action;
+use crate::components::mod_desc::ModDesc;
 use crate::components::mod_search::TextInput;
 use crate::components::option_selector::{Actions, OptionSelector, OptionSelectorText};
 use balatui::RemoteMod;
@@ -32,6 +32,7 @@ pub struct RemoteModsComponent {
     pub has_focus: bool,
     options: OptionSelector,
     searchbar: TextInput,
+    desc: ModDesc,
     mods: Vec<RemoteMod>,
     displayed_mods: Vec<RemoteMod>,
     local_action_tx: mpsc::UnboundedSender<Actions>,
@@ -60,6 +61,7 @@ impl RemoteModsComponent {
             has_focus: false,
             options: installed_mod_selector,
             searchbar,
+            desc: ModDesc::new(),
             mods: mods_ref.clone(),
             displayed_mods: mods_ref.clone(),
             local_action_rx: modlist_rx,
@@ -84,10 +86,6 @@ impl RemoteModsComponent {
                     OptionSelectorText::new(
                         format!(" by {}", m.owner.clone()),
                         Style::default().fg(Color::DarkGray),
-                    ),
-                    OptionSelectorText::new(
-                        format!(" {}", m.description.clone()),
-                        Style::default().fg(Color::LightBlue),
                     ),
                 ], //                Span::styled(format!("{} {} by {:?}", m.name, m.version, m.author), Style::default().fg(Color::Green)),
             );
@@ -209,23 +207,27 @@ impl Component for RemoteModsComponent {
     fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(0),
-                Constraint::Length(1),
-            ])
+            .constraints([Constraint::Length(5), Constraint::Min(0)])
+            .spacing(Spacing::Overlap(1))
             .split(area);
 
-        let [_, center, _] = Layout::horizontal([
-            Constraint::Length(5),
-            Constraint::Min(0),
-            Constraint::Length(5),
-        ])
-        .areas(vertical_chunks[1]);
+        let [details, list] =
+            Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .areas(vertical_chunks[1]);
         self.searchbar.draw(frame, vertical_chunks[0])?;
         self.options
-            .draw(frame, center)
+            .draw(
+                frame,
+                list.inner(Margin {
+                    horizontal: 5,
+                    vertical: 2,
+                }),
+            )
             .expect("Options failed to draw!");
+
+        self.desc
+            .set_selected(self.displayed_mods.get(self.options.selected).cloned());
+        self.desc.draw(frame, details)?;
 
         Ok(())
     }

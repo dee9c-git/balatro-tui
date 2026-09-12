@@ -13,6 +13,7 @@ mod about;
 mod authoring;
 pub mod home;
 mod mod_list;
+mod mod_desc;
 mod mod_search;
 mod option_selector;
 mod quick_options;
